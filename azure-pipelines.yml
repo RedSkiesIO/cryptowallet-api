@@ -20,5 +20,5 @@ steps:
 #  displayName: 'Run npm dependancy security audit'
 
 - script: |
-    npm run test
-  displayName: 'Run unit test'
+    npm run test:unit:ci
+  displayName: 'Run unit test:unit:ci'
