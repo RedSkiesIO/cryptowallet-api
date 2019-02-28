@@ -14,10 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with cryptowallet-api.  If not, see <http://www.gnu.org/licenses/>.
 
-export class PriceFeedDto {
-  constructor(data) {
-    this.name = data.name;
-  }
+import envConfig from '../../../config/envConfig';
+import { PriceFeed } from '../interfaces/price-feed.interface';
 
-  readonly name: string;
+export class PriceFeedDto {
+  public code: string;
+
+  constructor(data) {
+    this.code = data.code;
+
+    envConfig.CURRENCIES.split(',').forEach((currency: string) => {
+      this[currency] = data[currency];
+    });
+  }
 }

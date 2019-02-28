@@ -29,11 +29,19 @@ export class PriceFeedService {
     return await createdPriceFeed.save();
   }
 
-  async findAll(): Promise<PriceFeed[]> {
-    return await this.priceFeedModel.find().exec();
+  async findAll(exclude: object = { _id: 0, __v: 0 }): Promise<PriceFeed[]> {
+    return await this.priceFeedModel.find({}, exclude).exec();
   }
 
-  async findOne(query: object, exclude: object = {}): Promise<PriceFeed[]> {
+  async findOne(query: object, exclude: object = { _id: 0, __v: 0 }): Promise<PriceFeed[]> {
     return await this.priceFeedModel.findOne(query, exclude).exec();
+  }
+
+  async delete(query: object): Promise<any> {
+    return await this.priceFeedModel.find(query).remove().exec();
+  }
+
+  async drop(): Promise<any> {
+    return await this.priceFeedModel.deleteMany({}).exec();
   }
 }

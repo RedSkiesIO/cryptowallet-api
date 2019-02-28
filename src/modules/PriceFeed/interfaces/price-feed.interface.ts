@@ -18,6 +18,6 @@ import { Document } from 'mongoose';
 import { PriceFeedData } from './price-feed-data.interface';
 
 export interface PriceFeed extends Document {
-  readonly code: string;
-  [key: string]: PriceFeedData;
+  public code: string;
+  public [key: string]: PriceFeedData;
 }

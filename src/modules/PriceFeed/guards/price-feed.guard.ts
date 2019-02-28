@@ -14,12 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with cryptowallet-api.  If not, see <http://www.gnu.org/licenses/>.
 
+import { ConfigService } from '../../../config/config.service';
 import {
   Injectable,
   CanActivate,
   ExecutionContext,
   HttpException,
-  HttpStatus
+  HttpStatus,
 } from '@nestjs/common';
 
 interface Params {
@@ -29,16 +30,28 @@ interface Params {
 
 @Injectable()
 export class PriceFeedGuard implements CanActivate {
+  constructor(private readonly configService: ConfigService) {}
+
   validateParams(params: Params): boolean {
     const validCoins: boolean = params.coin.split(',').every((coin) => {
       return new RegExp('^[A-Z]{0,10}$').test(coin);
     });
 
-    const validCurrencies: boolean = params.currency.split(',').every((currency) => {
+    const requestedCurrencies = params.currency.split(',');
+    const validCurrencies: boolean = requestedCurrencies.every((currency) => {
       return new RegExp('^[A-Z]{0,3}$').test(currency);
     });
 
-    return validCoins && validCurrencies;
+    const supportedCurrencies = this.configService.get('CURRENCIES').split(',');
+    let supportsCurrencies: boolean = requestedCurrencies.every((currency) => {
+      return supportedCurrencies.includes(currency);
+    });
+
+    if (requestedCurrencies[0] === 'ALL') {
+      supportsCurrencies = true;
+    }
+
+    return validCoins && validCurrencies && supportsCurrencies;
   }
 
   canActivate(
@@ -46,7 +59,7 @@ export class PriceFeedGuard implements CanActivate {
   ): boolean | Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     if (this.validateParams(request.params)) {
-      return true
+      return true;
     } else {
       throw new HttpException('Unprocessable Entity', HttpStatus.UNPROCESSABLE_ENTITY);
     }

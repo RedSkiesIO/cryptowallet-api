@@ -15,8 +15,13 @@
 // along with cryptowallet-api.  If not, see <http://www.gnu.org/licenses/>.
 
 export interface PriceFeedData {
-  VOLUME24HOURTO: string;
-  PRICE: string;
-  CHANGEPCT24HOUR: string;
+  VOLUME24HOURTO: any;
+  PRICE: any;
+  CHANGEPCT24HOUR: any;
 }
 
+export const PriceFeedDataInterfaceKeys = [
+  'VOLUME24HOURTO',
+  'PRICE',
+  'CHANGEPCT24HOUR',
+];

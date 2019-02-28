@@ -17,4 +17,13 @@
 import * as dotenv from 'dotenv';
 import * as fs from 'fs';
 
-export default dotenv.parse(fs.readFileSync(`${process.env.NODE_ENV}.env`));
+const path = '.env';
+let env;
+
+if (fs.existsSync(path)) {
+  env = dotenv.parse(fs.readFileSync(path));
+}
+
+env = { ...process.env, ...env };
+
+export default env;

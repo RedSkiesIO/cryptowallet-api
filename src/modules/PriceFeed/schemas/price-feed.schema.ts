@@ -19,7 +19,7 @@ import * as mongoose from 'mongoose';
 
 const schemaShape: object = { code: String };
 envConfig.CURRENCIES.split(',').forEach((currency: string) => {
-  schemaShape[currency] = String;
+  schemaShape[currency] = Object;
 });
 
 export const PriceFeedSchema = new mongoose.Schema(schemaShape);
