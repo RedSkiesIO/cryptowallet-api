@@ -26,37 +26,31 @@ import {
 interface Params {
   coin: string;
   currency: string;
+  period: string;
 }
 
 @Injectable()
-export class PriceFeedGuard implements CanActivate {
+export class PriceHistoryGuard implements CanActivate {
   constructor(private readonly configService: ConfigService) {}
 
   validateParams(params: Params): boolean {
     const {
       coin,
       currency,
+      period,
     } = params;
 
-    const validCoins: boolean = coin.split(',').every((code) => {
-      return new RegExp('^[A-Z]{0,10}$').test(code);
-    });
+    const validCoin: boolean = new RegExp('^[A-Z]{0,10}$').test(coin);
 
-    const requestedCurrencies = currency.split(',');
-    const validCurrencies: boolean = requestedCurrencies.every((currencyCode) => {
-      return new RegExp('^[A-Z]{0,3}$').test(currencyCode);
-    });
+    const requestedCurrencies = params.currency.split(',');
+    const validCurrency: boolean = new RegExp('^[A-Z]{0,3}$').test(currency);
 
     const supportedCurrencies = this.configService.get('CURRENCIES').split(',');
-    let supportsCurrencies: boolean = requestedCurrencies.every((currencyCode) => {
-      return supportedCurrencies.includes(currencyCode);
-    });
+    const supportsCurrency: boolean = supportedCurrencies.includes(currency);
 
-    if (requestedCurrencies[0] === 'ALL') {
-      supportsCurrencies = true;
-    }
+    const validPeriod: boolean = (period === 'day' || period === 'week' || period === 'month');
 
-    return validCoins && validCurrencies && supportsCurrencies;
+    return validCoin && validCurrency && supportsCurrency && validPeriod;
   }
 
   canActivate(

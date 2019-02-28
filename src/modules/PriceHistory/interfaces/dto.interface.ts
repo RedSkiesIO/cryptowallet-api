@@ -1,5 +1,7 @@
 export interface DTO {
   code: string;
   timestamp: number;
-  [key: string]: any;
+  currency: string;
+  period: string;
+  data: object;
 }

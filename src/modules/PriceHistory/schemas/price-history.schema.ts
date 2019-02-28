@@ -14,11 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with cryptowallet-api.  If not, see <http://www.gnu.org/licenses/>.
 
-import { Document } from 'mongoose';
-import { PriceFeedData } from './price-feed-data.interface';
+import * as mongoose from 'mongoose';
 
-export interface PriceFeed extends Document {
-  public code: string;
-  public timestamp: number;
-  public [key: string]: PriceFeedData;
-}
+const schemaShape: object = {
+  code: String,
+  timestamp: Number,
+  currency: String,
+  period: String,
+  data: Object,
+};
+
+export const PriceHistorySchema = new mongoose.Schema(schemaShape);

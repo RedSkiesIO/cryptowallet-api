@@ -19,12 +19,14 @@ import { PriceFeed } from '../interfaces/price-feed.interface';
 
 export class PriceFeedDto {
   public code: string;
+  public timestamp: number;
 
-  constructor(data) {
-    this.code = data.code;
+  constructor(payload) {
+    this.code = payload.code;
+    this.timestamp = payload.timestamp;
 
     envConfig.CURRENCIES.split(',').forEach((currency: string) => {
-      this[currency] = data[currency];
+      this[currency] = payload[currency];
     });
   }
 }

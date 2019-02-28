@@ -14,7 +14,7 @@
     "start:prod": "cross-env NODE_ENV=prod node dist/main.js",
     "lint": "tslint -p tsconfig.json -c tslint.json",
     "test:unit": "cross-env NODE_ENV=dev jest --forceExit",
-    "test:unit:ci": "cross-env NODE_ENV=dev PORT=$PORT CURRENCIES=$CURRENCIES CRYPTO_COMPARE_KEY=$CRYPTO_COMPARE_KEY jest --forceExit",
+    "test:unit:ci": "cross-env NODE_ENV=dev PORT=$PORT CURRENCIES=$CURRENCIES CRYPTO_COMPARE_KEY=$CRYPTO_COMPARE_KEY CRYPTO_COMPARE_URL=$CRYPTO_COMPARE_URL jest --forceExit",
     "test:watch": "cross-env NODE_ENV=dev jest --watch",
     "test:cov": "cross-env NODE_ENV=dev jest --coverage",
     "test:debug": "cross-env NODE_ENV=dev node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",

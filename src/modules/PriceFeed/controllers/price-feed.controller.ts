@@ -43,7 +43,7 @@ export class PriceFeedController {
    */
   filterOutCurrencies(data: object, currenciesToInclude: string[]): object {
     for (const key in data) {
-      if (key !== 'code') {
+      if (key !== 'code' && key !== 'timestamp') {
         if (!currenciesToInclude.includes(key)) {
           delete data[key];
         }
@@ -83,11 +83,14 @@ export class PriceFeedController {
 
     const response: any = await axios.get(URL);
 
-    if (response.Response && response.Repsonse === 'Error') {
+    if (response.data.Response && response.data.Response === 'Error') {
       throw new HttpException(`Internal Server Error. ${response.Repsonse.Message}`, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    const dtoRaw: Partial<DTO> = { code };
+    const dtoRaw: Partial<DTO> = {
+      code,
+      timestamp: Math.round(+new Date() / 1000),
+    };
 
     supportedCurrencies.forEach((currency) => {
       const filtered = {};

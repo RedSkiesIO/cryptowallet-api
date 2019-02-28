@@ -17,7 +17,10 @@
 import envConfig from '../../../config/envConfig';
 import * as mongoose from 'mongoose';
 
-const schemaShape: object = { code: String };
+const schemaShape: object = {
+  timestamp: Number,
+  code: String,
+};
 envConfig.CURRENCIES.split(',').forEach((currency: string) => {
   schemaShape[currency] = Object;
 });

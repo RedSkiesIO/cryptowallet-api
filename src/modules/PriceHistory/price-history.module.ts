@@ -1,5 +1,5 @@
 // Copyright (C) Atlas City Global <https://atlascity.io>
-// This file is part of cryptowallet-api <https://github.com/cryptowallet-api>.
+// This file is part of cryptowallet-api <https://github.com/atlascity/cryptowallet-api>.
 //
 // cryptowallet-api is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -14,23 +14,21 @@
 // You should have received a copy of the GNU General Public License
 // along with cryptowallet-api.  If not, see <http://www.gnu.org/licenses/>.
 
-import envConfig from './config/envConfig';
 import { Module } from '@nestjs/common';
-import { PriceFeedModule } from './modules/PriceFeed/price-feed.module';
-import { PriceHistoryModule } from './modules/PriceHistory/price-history.module';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ConfigModule } from './config/config.module';
-import { ConfigService } from './config/config.service';
+import { PriceHistoryController } from './controllers/price-history.controller';
+import { PriceHistoryService } from './price-history.service';
+import { PriceHistorySchema } from './schemas/price-history.schema';
+import { ConfigService } from '../../config/config.service';
 
 @Module({
   imports: [
-    ConfigModule,
-    MongooseModule.forRoot(envConfig.DB_URL, { useNewUrlParser: true }),
-    PriceFeedModule,
-    PriceHistoryModule,
+    MongooseModule.forFeature([{ name: 'PriceHistory', schema: PriceHistorySchema }]),
   ],
   exports: [],
-  controllers: [],
-  providers: [],
+  controllers: [PriceHistoryController],
+  providers: [PriceHistoryService],
 })
-export class AppModule {}
+export class PriceHistoryModule {
+  constructor(private readonly configService: ConfigService) {}
+}

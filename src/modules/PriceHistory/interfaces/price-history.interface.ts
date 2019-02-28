@@ -15,10 +15,11 @@
 // along with cryptowallet-api.  If not, see <http://www.gnu.org/licenses/>.
 
 import { Document } from 'mongoose';
-import { PriceFeedData } from './price-feed-data.interface';
 
-export interface PriceFeed extends Document {
+export interface PriceHistory extends Document {
   public code: string;
   public timestamp: number;
-  public [key: string]: PriceFeedData;
+  public currency: string;
+  public period: string;
+  public data: object;
 }

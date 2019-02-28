@@ -19,17 +19,17 @@ import envConfig from '../../../config/envConfig';
 import MongoMemoryServer from 'mongodb-memory-server';
 import { Test } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { PriceFeedController } from './price-feed.controller';
-import { PriceFeedService } from '../price-feed.service';
-import { PriceFeedModule } from '../price-feed.module';
+import { PriceHistoryController } from './price-history.controller';
+import { PriceHistoryService } from '../price-history.service';
+import { PriceHistoryModule } from '../price-history.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '../../../config/config.module';
 import { ConfigService } from '../../../config/config.service';
 
-describe('PriceFeedController', () => {
+describe('PriceHistoryController', () => {
   let app: INestApplication;
   let mongoServer;
-  let priceFeedService;
+  let priceHistoryService;
   let configService;
 
   beforeEach(async () => {
@@ -40,24 +40,24 @@ describe('PriceFeedController', () => {
       imports: [
         ConfigModule,
         MongooseModule.forRoot(mongoUri, { useNewUrlParser: true }),
-        PriceFeedModule,
+        PriceHistoryModule,
       ],
-      controllers: [PriceFeedController],
-      providers: [PriceFeedService],
+      controllers: [PriceHistoryController],
+      providers: [PriceHistoryService],
     }).compile();
 
-    priceFeedService = module.get<PriceFeedService>(PriceFeedService);
+    priceHistoryService = module.get<PriceHistoryService>(PriceHistoryService);
     configService = module.get<ConfigService>(ConfigService);
 
     app = module.createNestApplication();
     await app.init();
   });
 
-  describe('/price-feed/:coin/:currency', () => {
+  describe('/price-history/:coin/:currency/:period', () => {
     describe('validates parameters before passing the request to the controller', () => {
-      it('responds with 200 and JSON when called with single parameters', async (done) => {
+      it('responds with 200 and JSON when called correctly', async (done) => {
         return request(app.getHttpServer())
-          .get('/price-feed/BTC/GBP')
+          .get('/price-history/BTC/GBP/day')
           .expect(200)
           .expect('Content-Type', /json/)
           .then((response) => {
@@ -65,47 +65,41 @@ describe('PriceFeedController', () => {
           });
       });
 
-      it('responds with 200 and JSON when called with multiple parameters', async (done) => {
+      it('responds with 422 and JSON when called with invalid coin code parameter', async (done) => {
         return request(app.getHttpServer())
-          .get('/price-feed/BTC,LTC/GBP,USD')
-          .expect(200)
+          .get('/price-history/qwe/GBP/day')
+          .expect(422)
           .expect('Content-Type', /json/)
           .then((response) => {
             done();
           });
       });
 
-      it('responds with 422 when called with invalid coin parameter', async (done) => {
+      it('responds with 422 and JSON when called with invalid currency parameter', async (done) => {
         return request(app.getHttpServer())
-          .get('/price-feed/BTC1/GBP,USD')
+          .get('/price-history/BTC/qwW/day')
           .expect(422)
+          .expect('Content-Type', /json/)
           .then((response) => {
             done();
           });
       });
 
-      it('responds with 422 when called with invalid currency parameter', async (done) => {
+      it('responds with 422 and JSON when called with unsupported currency', async (done) => {
         return request(app.getHttpServer())
-          .get('/price-feed/BTC/1GBP,USD')
+          .get('/price-history/BTC/PPP/day')
           .expect(422)
+          .expect('Content-Type', /json/)
           .then((response) => {
             done();
           });
       });
 
-      it('responds with 422 when called with incorrectly formatted parameters', async (done) => {
+      it('responds with 422 and JSON when called with invalid period', async (done) => {
         return request(app.getHttpServer())
-          .get('/price-feed/BTC, LTC/GBP,USD')
+          .get('/price-history/BTC/USD/quater')
           .expect(422)
-          .then((response) => {
-            done();
-          });
-      });
-
-      it('responds with 422 when unsupported currency is requested', async (done) => {
-        return request(app.getHttpServer())
-          .get('/price-feed/BTC,LTC/XXX')
-          .expect(422)
+          .expect('Content-Type', /json/)
           .then((response) => {
             done();
           });
@@ -115,23 +109,26 @@ describe('PriceFeedController', () => {
     describe('processes the request correctly', () => {
       it('fetches the data from the external API and caches it in the DB, responds', async (done) => {
         return request(app.getHttpServer())
-          .get('/price-feed/BTC,LTC/GBP,USD')
+          .get('/price-history/BTC/GBP/month')
           .expect(200)
           .then(async (response) => {
-            expect(response.body.length).toBe(2);
-            response.body.forEach((coinData) => {
-              expect(['GBP', 'USD'].includes(coinData.code));
+            expect(response.body.code).toBe('BTC');
+            expect(response.body.currency).toBe('GBP');
+            expect(response.body.period).toBe('month');
+            expect(response.body.data).toBeTruthy();
+
+            let priceHistoryData = await priceHistoryService.findAll();
+            expect(priceHistoryData.length).toBe(1);
+            priceHistoryData = await priceHistoryService.findOne({
+              code: 'BTC',
+              currency: 'GBP',
+              period: 'month',
             });
 
-            const priceFeedData = await priceFeedService.findAll();
-            expect(priceFeedData.length).toBe(2);
-
-            const supportedCurrencies = configService.get('CURRENCIES').split(',');
-            const priceFeedDataBTC = await priceFeedService.findOne({ code: 'BTC' });
-            expect(priceFeedDataBTC.code).toBe('BTC');
-            supportedCurrencies.forEach((currency) => {
-               expect(priceFeedDataBTC[currency]).toBeTruthy();
-            });
+            expect(priceHistoryData.code).toBe('BTC');
+            expect(priceHistoryData.currency).toBe('GBP');
+            expect(priceHistoryData.period).toBe('month');
+            expect(priceHistoryData.data).toBeTruthy();
 
             done();
           });
@@ -141,59 +138,48 @@ describe('PriceFeedController', () => {
         let timestamp;
 
         return request(app.getHttpServer())
-          .get('/price-feed/BTC,ETH/GBP,EUR')
+          .get('/price-history/ETH/USD/week')
           .expect(200)
           .then((response) => {
-            response.body.forEach((coinData) => {
-              if (timestamp && timestamp !== coinData.timestamp) {
-                throw new Error('timestamps should match');
-              }
-              timestamp = coinData.timestamp;
-            });
+            timestamp = response.body.timestamp;
           })
           .then(() => {
             request(app.getHttpServer())
-              .get('/price-feed/BTC,ETH/GBP,EUR')
+              .get('/price-history/ETH/USD/week')
               .expect(200)
               .then((response) => {
-                response.body.forEach((coinData) => {
-                  expect(coinData.timestamp === timestamp).toBe(true);
-                });
-
+                expect(response.body.timestamp === timestamp);
                 done();
               });
           });
       });
 
-      it('returns all the currencies if parameter is set to "ALL"', async (done) => {
+      it('responds with correct data for period: "day"', async (done) => {
         return request(app.getHttpServer())
-          .get('/price-feed/BTC,LTC,ETH/ALL')
+          .get('/price-history/LTC/EUR/day')
           .expect(200)
-          .then(async (response) => {
-            expect(response.body.length).toBe(3);
-            const supportedCurrencies = configService.get('CURRENCIES').split(',');
-            response.body.forEach((coinData) => {
-              supportedCurrencies.forEach((currency) => {
-                expect(coinData[currency]).toBeTruthy();
-              });
-            });
-
+          .then((response) => {
+            expect(response.body.period).toBe('day');
             done();
           });
       });
 
-      it('returns only selected currency if requested', async (done) => {
+      it('responds with correct data for period: "week"', async (done) => {
         return request(app.getHttpServer())
-          .get('/price-feed/BTC,LTC,ETH/GBP')
+          .get('/price-history/BTC/EUR/week')
           .expect(200)
-          .then(async (response) => {
-            expect(response.body.length).toBe(3);
-            const supportedCurrencies = configService.get('CURRENCIES').split(',');
-            response.body.forEach((coinData) => {
-              expect(coinData.code).toBeTruthy();
-              expect(coinData.GBP).toBeTruthy();
-            });
+          .then((response) => {
+            expect(response.body.period).toBe('week');
+            done();
+          });
+      });
 
+      it('responds with correct data for period: "month"', async (done) => {
+        return request(app.getHttpServer())
+          .get('/price-history/ETH/EUR/month')
+          .expect(200)
+          .then((response) => {
+            expect(response.body.period).toBe('month');
             done();
           });
       });
