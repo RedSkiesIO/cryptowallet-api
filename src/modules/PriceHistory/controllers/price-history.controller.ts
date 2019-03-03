@@ -34,6 +34,14 @@ export class PriceHistoryController {
     this.configService = configService;
   }
 
+  /**
+   * Either fetches cached data form the DB or
+   * from the external API and puts it in the DB
+   * @param  {string}       code
+   * @param  {string}       currency
+   * @param  {string}       period
+   * @return {Promise<any>}
+   */
   async getCoinData(code: string, currency: string, period: string): Promise<any> {
     const result = await this.priceHistoryService.findOne({ code, currency, period });
     if (result) {
@@ -68,8 +76,12 @@ export class PriceHistoryController {
     const URL = `${cryptoCompareURL}/data/histo${histoType}?fsym=${code}&tsym=${currency}&limit=${limit}&api_key=${cryptoCompareKey}`;
     const response: any = await axios.get(URL);
 
+    if (response.status !== 200) {
+      throw new HttpException(`Internal Server Error.`, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     if (response.data.Response && response.data.Response === 'Error') {
-      throw new HttpException(`Internal Server Error. ${response.Repsonse.Message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(`Internal Server Error. ${response.Response.Message}`, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     const dto = new PriceHistoryDto({
@@ -84,6 +96,12 @@ export class PriceHistoryController {
     return dto;
   }
 
+  /**
+   * The API endpoint
+   * @param  {Object}       @Req()   request       contains all the request details
+   * @param  {Object}       @Param() params        contains all the request parameters
+   * @return {Promise<any>}
+   */
   @Get(':coin/:currency/:period')
   async fetchData(@Req() request, @Param() params): Promise<any> {
     try {

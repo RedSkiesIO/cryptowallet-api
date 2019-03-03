@@ -14,10 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with cryptowallet-api.  If not, see <http://www.gnu.org/licenses/>.
 
-export interface DTO {
-  code: string;
-  timestamp: number;
-  currency: string;
-  period: string;
-  data: object;
+import envConfig from '../../../config/envConfig';
+import { FeeEstimate } from '../interfaces/fee-estimate.interface';
+
+export class FeeEstimateDto {
+  public code: string;
+  public timestamp: number;
+  public data: object;
+
+  constructor(payload) {
+    this.code = payload.code;
+    this.timestamp = payload.timestamp;
+    this.data = payload.data;
+  }
 }

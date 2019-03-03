@@ -1,5 +1,5 @@
 // Copyright (C) Atlas City Global <https://atlascity.io>
-// This file is part cryptowallet-api <https://github.com/atlascity/cryptowallet-api>.
+// This file is part of cryptowallet-api <https://github.com/atlascity/cryptowallet-api>.
 //
 // cryptowallet-api is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with cryptowallet-api.  If not, see <http://www.gnu.org/licenses/>.
 
-export interface DTO {
-  code: string;
-  timestamp: number;
-  currency: string;
-  period: string;
-  data: object;
+import { Document } from 'mongoose';
+
+export interface FeeEstimate extends Document {
+  public code: string;
+  public timestamp: number;
+  public data: object;
 }

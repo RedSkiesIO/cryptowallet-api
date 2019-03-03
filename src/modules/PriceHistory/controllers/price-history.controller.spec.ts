@@ -183,6 +183,15 @@ describe('PriceHistoryController', () => {
             done();
           });
       });
+
+      it('responds with 500 when called with valid but non existing coin code', async (done) => {
+        return request(app.getHttpServer())
+          .get('/price-history/BTBTCC/EUR/month')
+          .expect(500)
+          .then((response) => {
+            done();
+          });
+      });
     });
   });
 

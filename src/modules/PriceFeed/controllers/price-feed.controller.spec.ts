@@ -197,6 +197,15 @@ describe('PriceFeedController', () => {
             done();
           });
       });
+
+      it('responds with 500 when called with valid but non existing coin code', async (done) => {
+        return request(app.getHttpServer())
+          .get('/price-feed/BTCTCS,LTC,ETH/GBP')
+          .expect(500)
+          .then((response) => {
+            done();
+          });
+      });
     });
   });
 

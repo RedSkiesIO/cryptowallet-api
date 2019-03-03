@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with cryptowallet-api.  If not, see <http://www.gnu.org/licenses/>.
 
+import { AbstractService } from '../../abstract/AbstractService';
 import { Model } from 'mongoose';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -21,27 +22,8 @@ import { PriceHistory } from './interfaces/price-history.interface';
 import { PriceHistoryDto } from './dto/price-history.dto';
 
 @Injectable()
-export class PriceHistoryService {
-  constructor(@InjectModel('PriceHistory') private readonly priceHistoryModel: Model<PriceHistory>) {}
-
-  async create(priceHistoryDto: PriceHistoryDto): Promise<PriceHistory> {
-    const createdPriceHistory = new this.priceHistoryModel(priceHistoryDto);
-    return await createdPriceHistory.save();
-  }
-
-  async findAll(exclude: object = { _id: 0, __v: 0 }): Promise<PriceHistory[]> {
-    return await this.priceHistoryModel.find({}, exclude).exec();
-  }
-
-  async findOne(query: object, exclude: object = { _id: 0, __v: 0 }): Promise<PriceHistory[]> {
-    return await this.priceHistoryModel.findOne(query, exclude).exec();
-  }
-
-  async delete(query: object): Promise<any> {
-    return await this.priceHistoryModel.find(query).remove().exec();
-  }
-
-  async drop(): Promise<any> {
-    return await this.priceHistoryModel.deleteMany({}).exec();
+export class PriceHistoryService extends AbstractService<PriceHistory, PriceHistoryDto> {
+  constructor(@InjectModel('PriceHistory') protected readonly model: Model<PriceHistory>) {
+    super();
   }
 }

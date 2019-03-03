@@ -14,10 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with cryptowallet-api.  If not, see <http://www.gnu.org/licenses/>.
 
-export interface DTO {
-  code: string;
-  timestamp: number;
-  currency: string;
-  period: string;
-  data: object;
+import { AbstractService } from '../../abstract/AbstractService';
+import { Model } from 'mongoose';
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { FeeEstimate } from './interfaces/fee-estimate.interface';
+import { FeeEstimateDto } from './dto/fee-estimate.dto';
+
+@Injectable()
+export class FeeEstimateService extends AbstractService<FeeEstimate, FeeEstimateDto> {
+  constructor(@InjectModel('FeeEstimate') protected readonly model: Model<FeeEstimate>) {
+    super();
+  }
 }

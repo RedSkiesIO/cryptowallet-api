@@ -56,7 +56,6 @@ export class PriceFeedController {
   /**
    * Returns the price feed data either from the DB
    * or from the API
-   *
    * @param  {string}       code the coin code
    * @return {Promise<any>}
    */
@@ -80,11 +79,14 @@ export class PriceFeedController {
     const cryptoCompareKey = this.configService.get('CRYPTO_COMPARE_KEY');
     const cryptoCompareURL = this.configService.get('CRYPTO_COMPARE_URL');
     const URL = `${cryptoCompareURL}/data/pricemultifull?fsyms=${code}&tsyms=${supportedCurrencies}&api_key=${cryptoCompareKey}`;
-
     const response: any = await axios.get(URL);
 
+    if (response.status !== 200) {
+      throw new HttpException(`Internal Server Error.`, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     if (response.data.Response && response.data.Response === 'Error') {
-      throw new HttpException(`Internal Server Error. ${response.Repsonse.Message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(`Internal Server Error. ${response.Response.Message}`, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     const dtoRaw: Partial<DTO> = {
@@ -114,7 +116,6 @@ export class PriceFeedController {
   /**
    * The API endpoint, composes an array of promises that fetch
    * the data and resolves them
-   *
    * @param  {object}       @Req()   request       contains all the request details
    * @param  {object}       @Param() params        contains all the request parameters
    * @return {Promise<Array>}
