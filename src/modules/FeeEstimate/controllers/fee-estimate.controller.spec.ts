@@ -55,7 +55,7 @@ describe('FeeEstimateController', () => {
 
   describe('/fee-estimate/:coin', () => {
     describe('validates parameters before passing the request to the controller', () => {
-      it('responds with 200 and JSON when called with single parameters', async (done) => {
+      it('responds with 200 and JSON when called with a single parameter', async (done) => {
         return request(app.getHttpServer())
           .get('/fee-estimate/BTC')
           .expect(200)

@@ -14,9 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with cryptowallet-api.  If not, see <http://www.gnu.org/licenses/>.
 
+import bugsnag from '@bugsnag/js';
 import envConfig from './config/envConfig';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+
+const bugsnagClient = bugsnag(envConfig.BUGSNAG_KEY);
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -24,3 +27,11 @@ async function bootstrap() {
 }
 
 bootstrap();
+
+process
+  .on('unhandledRejection', (err) => {
+    bugsnagClient.notify(err);
+  })
+  .on('uncaughtException', err => {
+    bugsnagClient.notify(err);
+  });

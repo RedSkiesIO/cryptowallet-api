@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with cryptowallet-api.  If not, see <http://www.gnu.org/licenses/>.
 
+import bugsnag from '@bugsnag/js';
+import envConfig from '../../../config/envConfig';
 import axios from 'axios';
 import { Controller, Get, Req, Param, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '../../../config/config.service';
@@ -22,6 +24,8 @@ import { FeeEstimateDto } from '../dto/fee-estimate.dto';
 import { FeeEstimateGuard } from '../guards/fee-estimate.guard';
 import { FeeEstimate } from '../interfaces/fee-estimate.interface';
 import { DTO } from '../interfaces/dto.interface';
+
+const bugsnagClient = bugsnag(envConfig.BUGSNAG_KEY);
 
 @Controller('fee-estimate')
 @UseGuards(FeeEstimateGuard)
@@ -46,30 +50,7 @@ export class FeeEstimateController {
       return result;
     }
 
-    const blockcypherToken = this.configService.get('BLOCKCYPHER_TOKEN');
-    const blockcypherURL = this.configService.get('BLOCKCYPHER_URL');
-    const URL = `${blockcypherURL}/v1/${code.toLowerCase()}/main?token=${blockcypherToken}`;
-    const response: any = await axios.get(URL);
-
-    if (response.status !== 200) {
-      let error = response.error;
-      if (!error) {
-        error = response.body;
-      }
-      throw new HttpException(`Internal Server Error. ${error}`, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    const data = {
-      high: response.data.high_fee_per_kb,
-      medium: response.data.medium_fee_per_kb,
-      low: response.data.low_fee_per_kb,
-    };
-
-    if (code === 'ETH') {
-      data.high = response.data.high_gas_price;
-      data.medium = response.data.medium_gas_price;
-      data.low = response.data.medium_gas_price;
-    }
+    const data = await this.feeEstimateService.fetchExternalApi(code);
 
     const dto = new FeeEstimateDto({
       code,
@@ -92,6 +73,7 @@ export class FeeEstimateController {
     try {
       return await this.getCoinData(params.coin);
     } catch (err) {
+      bugsnagClient.notify(err);
       throw new HttpException(`Internal Server Error. ${err.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }

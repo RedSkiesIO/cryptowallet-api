@@ -20,10 +20,12 @@ import { PriceFeedController } from './controllers/price-feed.controller';
 import { PriceFeedService } from './price-feed.service';
 import { PriceFeedSchema } from './schemas/price-feed.schema';
 import { ConfigService } from '../../config/config.service';
+import { PriceFeedCacheUpdateModule } from './price-feed-cache-update.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: 'PriceFeed', schema: PriceFeedSchema }]),
+    PriceFeedCacheUpdateModule,
   ],
   exports: [],
   controllers: [PriceFeedController],

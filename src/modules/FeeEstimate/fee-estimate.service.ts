@@ -14,16 +14,47 @@
 // You should have received a copy of the GNU General Public License
 // along with cryptowallet-api.  If not, see <http://www.gnu.org/licenses/>.
 
+import axios from 'axios';
 import { AbstractService } from '../../abstract/AbstractService';
 import { Model } from 'mongoose';
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { FeeEstimate } from './interfaces/fee-estimate.interface';
 import { FeeEstimateDto } from './dto/fee-estimate.dto';
+import { ConfigService } from '../../config/config.service';
 
 @Injectable()
 export class FeeEstimateService extends AbstractService<FeeEstimate, FeeEstimateDto> {
-  constructor(@InjectModel('FeeEstimate') protected readonly model: Model<FeeEstimate>) {
+  constructor(@InjectModel('FeeEstimate') protected readonly model: Model<FeeEstimate>, private readonly configService: ConfigService) {
     super();
+  }
+
+  async fetchExternalApi(code: string): Promise<any> {
+    const blockcypherToken = this.configService.get('BLOCKCYPHER_TOKEN');
+    const blockcypherURL = this.configService.get('BLOCKCYPHER_URL');
+    const URL = `${blockcypherURL}/v1/${code.toLowerCase()}/main?token=${blockcypherToken}`;
+    const response: any = await axios.get(URL);
+
+    if (response.status !== 200) {
+      let error = response.error;
+      if (!error) {
+        error = response.body;
+      }
+      throw new HttpException(`Internal Server Error. ${error}`, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    const data = {
+      high: response.data.high_fee_per_kb,
+      medium: response.data.medium_fee_per_kb,
+      low: response.data.low_fee_per_kb,
+    };
+
+    if (code === 'ETH') {
+      data.high = response.data.high_gas_price;
+      data.medium = response.data.medium_gas_price;
+      data.low = response.data.medium_gas_price;
+    }
+
+    return data;
   }
 }

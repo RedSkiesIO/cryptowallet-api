@@ -14,7 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with cryptowallet-api.  If not, see <http://www.gnu.org/licenses/>.
 
-import axios from 'axios';
+import bugsnag from '@bugsnag/js';
+import envConfig from '../../../config/envConfig';
 import { Controller, Get, Req, Param, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '../../../config/config.service';
 import { PriceFeedService } from '../price-feed.service';
@@ -23,6 +24,8 @@ import { PriceFeedGuard } from '../guards/price-feed.guard';
 import { PriceFeed } from '../interfaces/price-feed.interface';
 import { DTO } from '../interfaces/dto.interface';
 import { PriceFeedData, PriceFeedDataInterfaceKeys } from '../interfaces/price-feed-data.interface';
+
+const bugsnagClient = bugsnag(envConfig.BUGSNAG_KEY);
 
 @Controller('price-feed')
 @UseGuards(PriceFeedGuard)
@@ -76,18 +79,7 @@ export class PriceFeedController {
       return result;
     }
 
-    const cryptoCompareKey = this.configService.get('CRYPTO_COMPARE_KEY');
-    const cryptoCompareURL = this.configService.get('CRYPTO_COMPARE_URL');
-    const URL = `${cryptoCompareURL}/data/pricemultifull?fsyms=${code}&tsyms=${supportedCurrencies}&api_key=${cryptoCompareKey}`;
-    const response: any = await axios.get(URL);
-
-    if (response.status !== 200) {
-      throw new HttpException(`Internal Server Error.`, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    if (response.data.Response && response.data.Response === 'Error') {
-      throw new HttpException(`Internal Server Error. ${response.Response.Message}`, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    const response = await this.priceFeedService.fetchExternalApi(code);
 
     const dtoRaw: Partial<DTO> = {
       code,
@@ -140,6 +132,7 @@ export class PriceFeedController {
     try {
       return await Promise.all(promises);
     } catch (err) {
+      bugsnagClient.notify(err);
       throw new HttpException(`Internal Server Error. ${err.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }

@@ -14,7 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with cryptowallet-api.  If not, see <http://www.gnu.org/licenses/>.
 
-import axios from 'axios';
+import bugsnag from '@bugsnag/js';
+import envConfig from '../../../config/envConfig';
 import { Controller, Get, Req, Param, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '../../../config/config.service';
 import { PriceHistoryService } from '../price-history.service';
@@ -22,6 +23,8 @@ import { PriceHistoryDto } from '../dto/price-history.dto';
 import { PriceHistoryGuard } from '../guards/price-history.guard';
 import { PriceHistory } from '../interfaces/price-history.interface';
 import { DTO } from '../interfaces/dto.interface';
+
+const bugsnagClient = bugsnag(envConfig.BUGSNAG_KEY);
 
 @Controller('price-history')
 @UseGuards(PriceHistoryGuard)
@@ -48,41 +51,7 @@ export class PriceHistoryController {
       return result;
     }
 
-    let histoType;
-    let limit;
-
-    switch (period) {
-      case 'day':
-        histoType = 'hour';
-        limit = 24;
-        break;
-
-      case 'week':
-        histoType = 'hour';
-        limit = 168;
-        break;
-
-      case 'month':
-        histoType = 'day';
-        limit = 31;
-        break;
-
-       default:
-        throw new HttpException('Internal Server Error', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    const cryptoCompareKey = this.configService.get('CRYPTO_COMPARE_KEY');
-    const cryptoCompareURL = this.configService.get('CRYPTO_COMPARE_URL');
-    const URL = `${cryptoCompareURL}/data/histo${histoType}?fsym=${code}&tsym=${currency}&limit=${limit}&api_key=${cryptoCompareKey}`;
-    const response: any = await axios.get(URL);
-
-    if (response.status !== 200) {
-      throw new HttpException(`Internal Server Error.`, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    if (response.data.Response && response.data.Response === 'Error') {
-      throw new HttpException(`Internal Server Error. ${response.Response.Message}`, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    const response = await this.priceHistoryService.fetchExternalApi(code, currency, period);
 
     const dto = new PriceHistoryDto({
       code,
@@ -107,6 +76,7 @@ export class PriceHistoryController {
     try {
       return await this.getCoinData(params.coin, params.currency, params.period);
     } catch (err) {
+      bugsnagClient.notify(err);
       throw new HttpException(`Internal Server Error. ${err.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }

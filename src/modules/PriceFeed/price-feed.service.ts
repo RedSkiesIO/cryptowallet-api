@@ -14,16 +14,37 @@
 // You should have received a copy of the GNU General Public License
 // along with cryptowallet-api.  If not, see <http://www.gnu.org/licenses/>.
 
+import axios from 'axios';
 import { AbstractService } from '../../abstract/AbstractService';
 import { Model } from 'mongoose';
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { PriceFeed } from './interfaces/price-feed.interface';
 import { PriceFeedDto } from './dto/price-feed.dto';
+import { ConfigService } from '../../config/config.service';
 
 @Injectable()
 export class PriceFeedService extends AbstractService<PriceFeed, PriceFeedDto> {
-  constructor(@InjectModel('PriceFeed') protected readonly model: Model<PriceFeed>) {
+  constructor(@InjectModel('PriceFeed') protected readonly model: Model<PriceFeed>, private readonly configService: ConfigService) {
     super();
   }
+
+  async fetchExternalApi(code: string): Promise<any> {
+    const supportedCurrencies = this.configService.get('CURRENCIES').split(',');
+    const cryptoCompareKey = this.configService.get('CRYPTO_COMPARE_KEY');
+    const cryptoCompareURL = this.configService.get('CRYPTO_COMPARE_URL');
+    const URL = `${cryptoCompareURL}/data/pricemultifull?fsyms=${code}&tsyms=${supportedCurrencies}&api_key=${cryptoCompareKey}`;
+    const response: any = await axios.get(URL);
+
+    if (response.status !== 200) {
+      throw new HttpException(`Internal Server Error.`, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    if (response.data.Response && response.data.Response === 'Error') {
+      throw new HttpException(`Internal Server Error. ${response.Response.Message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    return response;
+  }
+
 }
