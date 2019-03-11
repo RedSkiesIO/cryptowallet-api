@@ -25,12 +25,14 @@ import { FeeEstimateModule } from '../fee-estimate.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '../../../config/config.module';
 import { ConfigService } from '../../../config/config.service';
+import { AuthModule } from '../../Auth/auth.module';
 
 describe('FeeEstimateController', () => {
   let app: INestApplication;
   let mongoServer;
   let feeEstimateService;
   let configService;
+  let token;
 
   beforeEach(async () => {
     mongoServer = new MongoMemoryServer();
@@ -38,6 +40,7 @@ describe('FeeEstimateController', () => {
 
     const module = await Test.createTestingModule({
       imports: [
+        AuthModule,
         ConfigModule,
         MongooseModule.forRoot(mongoUri, { useNewUrlParser: true }),
         FeeEstimateModule,
@@ -51,6 +54,9 @@ describe('FeeEstimateController', () => {
 
     app = module.createNestApplication();
     await app.init();
+
+    const response = await request(app.getHttpServer()).get('/auth/token/:fee');
+    token = response.body.accessToken;
   });
 
   describe('/fee-estimate/:coin', () => {
@@ -58,16 +64,19 @@ describe('FeeEstimateController', () => {
       it('responds with 200 and JSON when called with a single parameter', async (done) => {
         return request(app.getHttpServer())
           .get('/fee-estimate/BTC')
+          .set('Authorization', `Bearer ${token}`)
           .expect(200)
           .expect('Content-Type', /json/)
           .then((response) => {
             done();
           });
+
       });
 
       it('responds with 422 when called with invalid coin parameter', async (done) => {
         return request(app.getHttpServer())
           .get('/fee-estimate/BTC1')
+          .set('Authorization', `Bearer ${token}`)
           .expect(422)
           .then((response) => {
             done();
@@ -76,9 +85,21 @@ describe('FeeEstimateController', () => {
     });
 
     describe('processes the request correctly', () => {
+      it('denies access if called without a token', async (done) => {
+        return request(app.getHttpServer())
+          .get('/fee-estimate/BTC')
+          .expect(401)
+          .expect('Content-Type', /json/)
+          .then((response) => {
+            expect(response.body.message).toBe('Unauthorized. No auth token');
+            done();
+          });
+      });
+
       it('fetches the data from the external API and caches it in the DB, responds', async (done) => {
         return request(app.getHttpServer())
           .get('/fee-estimate/BTC')
+          .set('Authorization', `Bearer ${token}`)
           .expect(200)
           .then(async (response) => {
             expect(response.body.code).toBe('BTC');
@@ -98,6 +119,7 @@ describe('FeeEstimateController', () => {
 
         return request(app.getHttpServer())
           .get('/fee-estimate/LTC')
+          .set('Authorization', `Bearer ${token}`)
           .expect(200)
           .then((response) => {
             expect(response.body.code).toBe('LTC');
@@ -106,6 +128,7 @@ describe('FeeEstimateController', () => {
           .then(() => {
             request(app.getHttpServer())
               .get('/fee-estimate/LTC')
+              .set('Authorization', `Bearer ${token}`)
               .expect(200)
               .then((response) => {
                 expect(response.body.timestamp === timestamp).toBe(true);
@@ -117,6 +140,7 @@ describe('FeeEstimateController', () => {
       it('responds with 500 when called with valid but non existing coin code', async (done) => {
         return request(app.getHttpServer())
           .get('/fee-estimate/BTCBTC')
+          .set('Authorization', `Bearer ${token}`)
           .expect(500)
           .then((response) => {
             done();

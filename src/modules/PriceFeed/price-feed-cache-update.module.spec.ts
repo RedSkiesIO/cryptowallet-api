@@ -24,12 +24,14 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '../../config/config.module';
 import { ConfigService } from '../../config/config.service';
 import { PriceFeedCacheUpdateModule } from './price-feed-cache-update.module';
+import { AuthModule } from '../Auth/auth.module';
 
 describe('PriceFeedCacheUpdate module', () => {
   let app: INestApplication;
   let mongoServer;
   let priceFeedCacheUpdateModule;
   let priceFeedService;
+  let token;
 
   beforeEach(async () => {
     mongoServer = new MongoMemoryServer();
@@ -37,6 +39,7 @@ describe('PriceFeedCacheUpdate module', () => {
 
     const module = await Test.createTestingModule({
       imports: [
+        AuthModule,
         ConfigModule,
         MongooseModule.forRoot(mongoUri, { useNewUrlParser: true }),
         PriceFeedCacheUpdateModule,
@@ -50,10 +53,13 @@ describe('PriceFeedCacheUpdate module', () => {
 
     app = module.createNestApplication();
     await app.init();
+
+    const response = await request(app.getHttpServer()).get('/auth/token/:fake');
+    token = response.body.accessToken;
   });
 
   it('updates cached data when updateCache() method is called', async (done) => {
-    const response1 = await request(app.getHttpServer()).get('/price-feed/BTC,LTC/ALL');
+    const response1 = await request(app.getHttpServer()).get('/price-feed/BTC,LTC/ALL').set('Authorization', `Bearer ${token}`);
     const coinData1 = await priceFeedService.findOne({ code: 'BTC' });
     const coinData2 = await priceFeedService.findOne({ code: 'LTC' });
 

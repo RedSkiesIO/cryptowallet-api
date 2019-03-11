@@ -14,9 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with cryptowallet-api.  If not, see <http://www.gnu.org/licenses/>.
 
-import envConfig from '../../../config/envConfig';
-import { PriceHistory } from '../interfaces/price-history.interface';
-
 export class PriceHistoryDto {
   public code: string;
   public timestamp: number;

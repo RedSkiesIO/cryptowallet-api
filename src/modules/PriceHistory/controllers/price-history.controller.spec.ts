@@ -25,12 +25,14 @@ import { PriceHistoryModule } from '../price-history.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '../../../config/config.module';
 import { ConfigService } from '../../../config/config.service';
+import { AuthModule } from '../../Auth/auth.module';
 
 describe('PriceHistoryController', () => {
   let app: INestApplication;
   let mongoServer;
   let priceHistoryService;
   let configService;
+  let token;
 
   beforeEach(async () => {
     mongoServer = new MongoMemoryServer();
@@ -38,6 +40,7 @@ describe('PriceHistoryController', () => {
 
     const module = await Test.createTestingModule({
       imports: [
+        AuthModule,
         ConfigModule,
         MongooseModule.forRoot(mongoUri, { useNewUrlParser: true }),
         PriceHistoryModule,
@@ -51,6 +54,9 @@ describe('PriceHistoryController', () => {
 
     app = module.createNestApplication();
     await app.init();
+
+    const response = await request(app.getHttpServer()).get('/auth/token/:fake');
+    token = response.body.accessToken;
   });
 
   describe('/price-history/:coin/:currency/:period', () => {
@@ -58,6 +64,7 @@ describe('PriceHistoryController', () => {
       it('responds with 200 and JSON when called correctly', async (done) => {
         return request(app.getHttpServer())
           .get('/price-history/BTC/GBP/day')
+          .set('Authorization', `Bearer ${token}`)
           .expect(200)
           .expect('Content-Type', /json/)
           .then((response) => {
@@ -68,6 +75,7 @@ describe('PriceHistoryController', () => {
       it('responds with 422 and JSON when called with invalid coin code parameter', async (done) => {
         return request(app.getHttpServer())
           .get('/price-history/qwe/GBP/day')
+          .set('Authorization', `Bearer ${token}`)
           .expect(422)
           .expect('Content-Type', /json/)
           .then((response) => {
@@ -78,6 +86,7 @@ describe('PriceHistoryController', () => {
       it('responds with 422 and JSON when called with invalid currency parameter', async (done) => {
         return request(app.getHttpServer())
           .get('/price-history/BTC/qwW/day')
+          .set('Authorization', `Bearer ${token}`)
           .expect(422)
           .expect('Content-Type', /json/)
           .then((response) => {
@@ -88,6 +97,7 @@ describe('PriceHistoryController', () => {
       it('responds with 422 and JSON when called with unsupported currency', async (done) => {
         return request(app.getHttpServer())
           .get('/price-history/BTC/PPP/day')
+          .set('Authorization', `Bearer ${token}`)
           .expect(422)
           .expect('Content-Type', /json/)
           .then((response) => {
@@ -98,6 +108,7 @@ describe('PriceHistoryController', () => {
       it('responds with 422 and JSON when called with invalid period', async (done) => {
         return request(app.getHttpServer())
           .get('/price-history/BTC/USD/quater')
+          .set('Authorization', `Bearer ${token}`)
           .expect(422)
           .expect('Content-Type', /json/)
           .then((response) => {
@@ -107,9 +118,21 @@ describe('PriceHistoryController', () => {
     });
 
     describe('processes the request correctly', () => {
+      it('denies access if called without a token', async (done) => {
+        return request(app.getHttpServer())
+          .get('/price-history/BTC/GBP/month')
+          .expect(401)
+          .expect('Content-Type', /json/)
+          .then((response) => {
+            expect(response.body.message).toBe('Unauthorized. No auth token');
+            done();
+          });
+      });
+
       it('fetches the data from the external API and caches it in the DB, responds', async (done) => {
         return request(app.getHttpServer())
           .get('/price-history/BTC/GBP/month')
+          .set('Authorization', `Bearer ${token}`)
           .expect(200)
           .then(async (response) => {
             expect(response.body.code).toBe('BTC');
@@ -139,6 +162,7 @@ describe('PriceHistoryController', () => {
 
         return request(app.getHttpServer())
           .get('/price-history/ETH/USD/week')
+          .set('Authorization', `Bearer ${token}`)
           .expect(200)
           .then((response) => {
             timestamp = response.body.timestamp;
@@ -146,6 +170,7 @@ describe('PriceHistoryController', () => {
           .then(() => {
             request(app.getHttpServer())
               .get('/price-history/ETH/USD/week')
+              .set('Authorization', `Bearer ${token}`)
               .expect(200)
               .then((response) => {
                 expect(response.body.timestamp === timestamp);
@@ -157,6 +182,7 @@ describe('PriceHistoryController', () => {
       it('responds with correct data for period: "day"', async (done) => {
         return request(app.getHttpServer())
           .get('/price-history/LTC/EUR/day')
+          .set('Authorization', `Bearer ${token}`)
           .expect(200)
           .then((response) => {
             expect(response.body.period).toBe('day');
@@ -167,6 +193,7 @@ describe('PriceHistoryController', () => {
       it('responds with correct data for period: "week"', async (done) => {
         return request(app.getHttpServer())
           .get('/price-history/BTC/EUR/week')
+          .set('Authorization', `Bearer ${token}`)
           .expect(200)
           .then((response) => {
             expect(response.body.period).toBe('week');
@@ -177,6 +204,7 @@ describe('PriceHistoryController', () => {
       it('responds with correct data for period: "month"', async (done) => {
         return request(app.getHttpServer())
           .get('/price-history/ETH/EUR/month')
+          .set('Authorization', `Bearer ${token}`)
           .expect(200)
           .then((response) => {
             expect(response.body.period).toBe('month');
@@ -187,6 +215,7 @@ describe('PriceHistoryController', () => {
       it('responds with 500 when called with valid but non existing coin code', async (done) => {
         return request(app.getHttpServer())
           .get('/price-history/BTBTCC/EUR/month')
+          .set('Authorization', `Bearer ${token}`)
           .expect(500)
           .then((response) => {
             done();

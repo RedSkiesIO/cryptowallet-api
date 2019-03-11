@@ -24,12 +24,14 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '../../config/config.module';
 import { ConfigService } from '../../config/config.service';
 import { PriceHistoryCacheUpdateModule } from './price-history-cache-update.module';
+import { AuthModule } from '../Auth/auth.module';
 
 describe('PriceHistoryCacheUpdate module', () => {
   let app: INestApplication;
   let mongoServer;
   let priceHistoryCacheUpdateModule;
   let priceHistoryService;
+  let token;
 
   beforeEach(async () => {
     mongoServer = new MongoMemoryServer();
@@ -37,6 +39,7 @@ describe('PriceHistoryCacheUpdate module', () => {
 
     const module = await Test.createTestingModule({
       imports: [
+        AuthModule,
         ConfigModule,
         MongooseModule.forRoot(mongoUri, { useNewUrlParser: true }),
         PriceHistoryCacheUpdateModule,
@@ -50,11 +53,14 @@ describe('PriceHistoryCacheUpdate module', () => {
 
     app = module.createNestApplication();
     await app.init();
+
+    const response = await request(app.getHttpServer()).get('/auth/token/:fake');
+    token = response.body.accessToken;
   });
 
   it('updates cached data when updateCache() method is called', async (done) => {
-    const response1 = await request(app.getHttpServer()).get('/price-history/BTC/GBP/day');
-    const response2 = await request(app.getHttpServer()).get('/price-history/ETH/USD/week');
+    const response1 = await request(app.getHttpServer()).get('/price-history/BTC/GBP/day').set('Authorization', `Bearer ${token}`);
+    const response2 = await request(app.getHttpServer()).get('/price-history/ETH/USD/week').set('Authorization', `Bearer ${token}`);
 
     const response1Data = await priceHistoryService.findOne({ code: 'BTC', currency: 'GBP', period: 'day' });
     const response2Data = await priceHistoryService.findOne({ code: 'ETH', currency: 'USD', period: 'week' });
@@ -62,8 +68,8 @@ describe('PriceHistoryCacheUpdate module', () => {
     setTimeout(async () => {
       await priceHistoryCacheUpdateModule.updateCache();
 
-      const response1After = await request(app.getHttpServer()).get('/price-history/BTC/GBP/day');
-      const response2After = await request(app.getHttpServer()).get('/price-history/ETH/USD/week');
+      const response1After = await request(app.getHttpServer()).get('/price-history/BTC/GBP/day').set('Authorization', `Bearer ${token}`);
+      const response2After = await request(app.getHttpServer()).get('/price-history/ETH/USD/week').set('Authorization', `Bearer ${token}`);
 
       const response1DataAfter = await priceHistoryService.findOne({ code: 'BTC', currency: 'GBP', period: 'day' });
       const response2DataAfter = await priceHistoryService.findOne({ code: 'ETH', currency: 'USD', period: 'week' });

@@ -16,13 +16,15 @@
 
 import bugsnag from '@bugsnag/js';
 import envConfig from '../../../config/envConfig';
-import { Controller, Get, Req, Param, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Req, Param, UseGuards, HttpException, HttpStatus, UseInterceptors } from '@nestjs/common';
 import { ConfigService } from '../../../config/config.service';
 import { PriceHistoryService } from '../price-history.service';
 import { PriceHistoryDto } from '../dto/price-history.dto';
 import { PriceHistoryGuard } from '../guards/price-history.guard';
 import { PriceHistory } from '../interfaces/price-history.interface';
 import { DTO } from '../interfaces/dto.interface';
+import { JwtAuthGuard } from '../../Auth/guards/jwt-auth.guard';
+import { AuthResponseInterceptor } from '../../Auth/interceptors/auth-response.interceptor';
 
 const bugsnagClient = bugsnag(envConfig.BUGSNAG_KEY);
 
@@ -72,6 +74,8 @@ export class PriceHistoryController {
    * @return {Promise<any>}
    */
   @Get(':coin/:currency/:period')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(AuthResponseInterceptor)
   async fetchData(@Req() request, @Param() params): Promise<any> {
     try {
       return await this.getCoinData(params.coin, params.currency, params.period);

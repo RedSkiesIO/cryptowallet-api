@@ -1,5 +1,5 @@
 // Copyright (C) Atlas City Global <https://atlascity.io>
-// This file is part cryptowallet-api <https://github.com/atlascity/cryptowallet-api>.
+// This file is part of cryptowallet-api <https://github.com/atlascity/cryptowallet-api>.
 //
 // cryptowallet-api is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -14,18 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with cryptowallet-api.  If not, see <http://www.gnu.org/licenses/>.
 
-import envConfig from '../../../config/envConfig';
+import { ExecutionContext, Injectable, UnauthorizedException, HttpException, HttpStatus } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 
-export class PriceFeedDto {
-  public code: string;
-  public timestamp: number;
+@Injectable()
+export class JwtAuthGuard extends AuthGuard('jwt') {
+  canActivate(context: ExecutionContext) {
+    return super.canActivate(context);
+  }
 
-  constructor(payload) {
-    this.code = payload.code;
-    this.timestamp = payload.timestamp;
+  handleRequest(err, user, info) {
+    if (info && info.stack && info.message) {
+      throw new HttpException(`Unauthorized. ${info.message}`, HttpStatus.UNAUTHORIZED);
+    }
 
-    envConfig.CURRENCIES.split(',').forEach((currency: string) => {
-      this[currency] = payload[currency];
-    });
+    if (err || !user) {
+      throw err || new UnauthorizedException();
+    }
+    return user;
   }
 }

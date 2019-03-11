@@ -34,17 +34,27 @@ export class PriceFeedService extends AbstractService<PriceFeed, PriceFeedDto> {
     const cryptoCompareKey = this.configService.get('CRYPTO_COMPARE_KEY');
     const cryptoCompareURL = this.configService.get('CRYPTO_COMPARE_URL');
     const URL = `${cryptoCompareURL}/data/pricemultifull?fsyms=${code}&tsyms=${supportedCurrencies}&api_key=${cryptoCompareKey}`;
-    const response: any = await axios.get(URL);
 
-    if (response.status !== 200) {
-      throw new HttpException(`Internal Server Error.`, HttpStatus.INTERNAL_SERVER_ERROR);
+    try {
+      const response: any = await axios.get(URL);
+
+      if (response.status !== 200) {
+        throw new HttpException(`Internal Server Error.`, HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+
+      if (response.data.Response && response.data.Response === 'Error') {
+        throw new HttpException(`Internal Server Error. ${response.Response.Message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+
+      return response;
+    } catch (err) {
+      if (err.response) {
+        throw new Error(`External API: ${err.response.status}`);
+      } else if (err.request) {
+        throw new Error(`External API: no response received`);
+      } else {
+        throw new Error(err.message);
+      }
     }
-
-    if (response.data.Response && response.data.Response === 'Error') {
-      throw new HttpException(`Internal Server Error. ${response.Response.Message}`, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    return response;
   }
-
 }

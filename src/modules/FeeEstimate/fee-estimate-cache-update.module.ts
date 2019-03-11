@@ -23,12 +23,14 @@ import { FeeEstimateService } from './fee-estimate.service';
 import { FeeEstimateSchema } from './schemas/fee-estimate.schema';
 import { ConfigService } from '../../config/config.service';
 import { CacheUpdate } from '../../abstract/CacheUpdate';
+import { AuthModule } from '../Auth/auth.module';
 
 const bugsnagClient = bugsnag(envConfig.BUGSNAG_KEY);
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: 'FeeEstimate', schema: FeeEstimateSchema }]),
+    AuthModule,
   ],
   exports: [],
   controllers: [FeeEstimateController],

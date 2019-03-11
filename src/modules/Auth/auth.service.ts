@@ -14,25 +14,32 @@
 // You should have received a copy of the GNU General Public License
 // along with cryptowallet-api.  If not, see <http://www.gnu.org/licenses/>.
 
-import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-import { FeeEstimateController } from './controllers/fee-estimate.controller';
-import { FeeEstimateService } from './fee-estimate.service';
-import { FeeEstimateSchema } from './schemas/fee-estimate.schema';
+import { Model } from 'mongoose';
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { JwtService } from '@nestjs/jwt';
+import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { AbstractService } from '../../abstract/AbstractService';
 import { ConfigService } from '../../config/config.service';
-import { FeeEstimateCacheUpdateModule } from './fee-estimate-cache-update.module';
+import { Device } from './interfaces/device.interface';
+import { DeviceDto } from './dto/device.dto';
 
-@Module({
-  imports: [
-    MongooseModule.forFeature([{ name: 'FeeEstimate', schema: FeeEstimateSchema }]),
-    FeeEstimateCacheUpdateModule,
-  ],
-  exports: [],
-  controllers: [FeeEstimateController],
-  providers: [FeeEstimateService],
-})
-export class FeeEstimateModule {
+@Injectable()
+export class AuthService extends AbstractService<Device, DeviceDto> {
   constructor(
+    @InjectModel('Device') protected readonly model: Model<Device>,
     private readonly configService: ConfigService,
-  ) {}
+    private readonly jwtService: JwtService,
+  ) {
+    super();
+  }
+
+  async createToken(deviceIdHash: string, expiresIn: number) {
+    const device: JwtPayload = { deviceIdHash };
+    return this.jwtService.sign(device, { expiresIn });
+  }
+
+  async decodeToken(token: any) {
+    return this.jwtService.decode(token);
+  }
 }

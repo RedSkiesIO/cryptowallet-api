@@ -14,25 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with cryptowallet-api.  If not, see <http://www.gnu.org/licenses/>.
 
-import { Module } from '@nestjs/common';
+import envConfig from '../../config/envConfig';
 import { MongooseModule } from '@nestjs/mongoose';
-import { FeeEstimateController } from './controllers/fee-estimate.controller';
-import { FeeEstimateService } from './fee-estimate.service';
-import { FeeEstimateSchema } from './schemas/fee-estimate.schema';
-import { ConfigService } from '../../config/config.service';
-import { FeeEstimateCacheUpdateModule } from './fee-estimate-cache-update.module';
+import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+import { AuthController } from './controllers/auth.controller';
+import { AuthService } from './auth.service';
+import { JwtStrategy } from './jwt.strategy';
+import { DeviceSchema } from './schemas/device.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: 'FeeEstimate', schema: FeeEstimateSchema }]),
-    FeeEstimateCacheUpdateModule,
+    MongooseModule.forFeature([{ name: 'Device', schema: DeviceSchema }]),
+    PassportModule.register({ defaultStrategy: 'jwt' }),
+    JwtModule.register({
+      secretOrPrivateKey: envConfig.JWT_SECRET,
+    }),
   ],
-  exports: [],
-  controllers: [FeeEstimateController],
-  providers: [FeeEstimateService],
+  exports: [AuthService],
+  controllers: [AuthController],
+  providers: [AuthService, JwtStrategy],
 })
-export class FeeEstimateModule {
-  constructor(
-    private readonly configService: ConfigService,
-  ) {}
-}
+export class AuthModule {}

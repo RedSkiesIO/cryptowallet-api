@@ -25,11 +25,13 @@ import { ConfigService } from '../../config/config.service';
 import { DTO } from './interfaces/dto.interface';
 import { PriceFeedDataInterfaceKeys } from './interfaces/price-feed-data.interface';
 import { CacheUpdate } from '../../abstract/CacheUpdate';
+import { AuthModule } from '../Auth/auth.module';
 
 const bugsnagClient = bugsnag(envConfig.BUGSNAG_KEY);
 
 @Module({
   imports: [
+    AuthModule,
     MongooseModule.forFeature([{ name: 'PriceFeed', schema: PriceFeedSchema }]),
   ],
   exports: [],

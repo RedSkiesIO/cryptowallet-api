@@ -23,11 +23,13 @@ import { PriceHistoryService } from './price-history.service';
 import { PriceHistorySchema } from './schemas/price-history.schema';
 import { ConfigService } from '../../config/config.service';
 import { CacheUpdate } from '../../abstract/CacheUpdate';
+import { AuthModule } from '../Auth/auth.module';
 
 const bugsnagClient = bugsnag(envConfig.BUGSNAG_KEY);
 
 @Module({
   imports: [
+    AuthModule,
     MongooseModule.forFeature([{ name: 'PriceHistory', schema: PriceHistorySchema }]),
   ],
   exports: [],

@@ -33,28 +33,39 @@ export class FeeEstimateService extends AbstractService<FeeEstimate, FeeEstimate
     const blockcypherToken = this.configService.get('BLOCKCYPHER_TOKEN');
     const blockcypherURL = this.configService.get('BLOCKCYPHER_URL');
     const URL = `${blockcypherURL}/v1/${code.toLowerCase()}/main?token=${blockcypherToken}`;
-    const response: any = await axios.get(URL);
 
-    if (response.status !== 200) {
-      let error = response.error;
-      if (!error) {
-        error = response.body;
+    try {
+      const response: any = await axios.get(URL);
+
+      if (response.status !== 200) {
+        let error = response.error;
+        if (!error) {
+          error = response.body;
+        }
+        throw new HttpException(`Internal Server Error. ${error}`, HttpStatus.INTERNAL_SERVER_ERROR);
       }
-      throw new HttpException(`Internal Server Error. ${error}`, HttpStatus.INTERNAL_SERVER_ERROR);
+
+      const data = {
+        high: response.data.high_fee_per_kb,
+        medium: response.data.medium_fee_per_kb,
+        low: response.data.low_fee_per_kb,
+      };
+
+      if (code === 'ETH') {
+        data.high = response.data.high_gas_price;
+        data.medium = response.data.medium_gas_price;
+        data.low = response.data.medium_gas_price;
+      }
+
+      return data;
+    } catch (err) {
+      if (err.response) {
+        throw new Error(`External API: ${err.response.status}`);
+      } else if (err.request) {
+        throw new Error(`External API: no response received`);
+      } else {
+        throw new Error(err.message);
+      }
     }
-
-    const data = {
-      high: response.data.high_fee_per_kb,
-      medium: response.data.medium_fee_per_kb,
-      low: response.data.low_fee_per_kb,
-    };
-
-    if (code === 'ETH') {
-      data.high = response.data.high_gas_price;
-      data.medium = response.data.medium_gas_price;
-      data.low = response.data.medium_gas_price;
-    }
-
-    return data;
   }
 }

@@ -14,9 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with cryptowallet-api.  If not, see <http://www.gnu.org/licenses/>.
 
-import envConfig from '../../../config/envConfig';
-import { FeeEstimate } from '../interfaces/fee-estimate.interface';
-
 export class FeeEstimateDto {
   public code: string;
   public timestamp: number;

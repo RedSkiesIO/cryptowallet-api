@@ -14,18 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with cryptowallet-api.  If not, see <http://www.gnu.org/licenses/>.
 
-import envConfig from '../../../config/envConfig';
-
-export class PriceFeedDto {
-  public code: string;
-  public timestamp: number;
+export class DeviceDto {
+  public deviceIdHash: string;
+  public refreshTokens: string[];
 
   constructor(payload) {
-    this.code = payload.code;
-    this.timestamp = payload.timestamp;
-
-    envConfig.CURRENCIES.split(',').forEach((currency: string) => {
-      this[currency] = payload[currency];
-    });
+    this.deviceIdHash = payload.deviceIdHash;
+    this.refreshTokens = payload.refreshTokens;
   }
 }

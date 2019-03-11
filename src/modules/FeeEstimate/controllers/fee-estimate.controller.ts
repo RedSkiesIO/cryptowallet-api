@@ -17,26 +17,23 @@
 import bugsnag from '@bugsnag/js';
 import envConfig from '../../../config/envConfig';
 import axios from 'axios';
-import { Controller, Get, Req, Param, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Req, Param, UseGuards, HttpException, HttpStatus, UseInterceptors } from '@nestjs/common';
 import { ConfigService } from '../../../config/config.service';
 import { FeeEstimateService } from '../fee-estimate.service';
 import { FeeEstimateDto } from '../dto/fee-estimate.dto';
 import { FeeEstimateGuard } from '../guards/fee-estimate.guard';
-import { FeeEstimate } from '../interfaces/fee-estimate.interface';
-import { DTO } from '../interfaces/dto.interface';
+import { JwtAuthGuard } from '../../Auth/guards/jwt-auth.guard';
+import { AuthResponseInterceptor } from '../../Auth/interceptors/auth-response.interceptor';
 
 const bugsnagClient = bugsnag(envConfig.BUGSNAG_KEY);
 
-@Controller('fee-estimate')
 @UseGuards(FeeEstimateGuard)
+@Controller('fee-estimate')
 export class FeeEstimateController {
-  private readonly feeEstimateService: FeeEstimateService;
-  private readonly configService: ConfigService;
-
-  constructor(feeEstimateService: FeeEstimateService, configService: ConfigService) {
-    this.feeEstimateService = feeEstimateService;
-    this.configService = configService;
-  }
+  constructor(
+    private readonly feeEstimateService: FeeEstimateService,
+    private readonly configService: ConfigService,
+  ) {}
 
   /**
    * Either fetches cached data form the DB or
@@ -68,6 +65,9 @@ export class FeeEstimateController {
    * @param  {Object}       @Param() params        contains all the request parameters
    * @return {Promise<any>}
    */
+
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(AuthResponseInterceptor)
   @Get(':coin')
   async fetchData(@Req() request, @Param() params): Promise<any> {
     try {

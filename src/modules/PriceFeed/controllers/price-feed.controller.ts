@@ -16,7 +16,7 @@
 
 import bugsnag from '@bugsnag/js';
 import envConfig from '../../../config/envConfig';
-import { Controller, Get, Req, Param, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Req, Param, UseGuards, HttpException, HttpStatus, UseInterceptors } from '@nestjs/common';
 import { ConfigService } from '../../../config/config.service';
 import { PriceFeedService } from '../price-feed.service';
 import { PriceFeedDto } from '../dto/price-feed.dto';
@@ -24,6 +24,8 @@ import { PriceFeedGuard } from '../guards/price-feed.guard';
 import { PriceFeed } from '../interfaces/price-feed.interface';
 import { DTO } from '../interfaces/dto.interface';
 import { PriceFeedData, PriceFeedDataInterfaceKeys } from '../interfaces/price-feed-data.interface';
+import { JwtAuthGuard } from '../../Auth/guards/jwt-auth.guard';
+import { AuthResponseInterceptor } from '../../Auth/interceptors/auth-response.interceptor';
 
 const bugsnagClient = bugsnag(envConfig.BUGSNAG_KEY);
 
@@ -80,10 +82,11 @@ export class PriceFeedController {
     }
 
     const response = await this.priceFeedService.fetchExternalApi(code);
+    const timestamp = Math.round(+new Date() / 1000);
 
     const dtoRaw: Partial<DTO> = {
       code,
-      timestamp: Math.round(+new Date() / 1000),
+      timestamp,
     };
 
     supportedCurrencies.forEach((currency) => {
@@ -105,6 +108,8 @@ export class PriceFeedController {
     return this.filterOutCurrencies(dto, requestedCurrencies);
   }
 
+  // @UseInterceptors(AuthResponseInterceptor)
+
   /**
    * The API endpoint, composes an array of promises that fetch
    * the data and resolves them
@@ -113,6 +118,8 @@ export class PriceFeedController {
    * @return {Promise<Array>}
    */
   @Get(':coin/:currency')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(AuthResponseInterceptor)
   async fetchData(@Req() request, @Param() params): Promise<any> {
     const supportedCurrencies = this.configService.get('CURRENCIES').split(',');
     const requestedCoins = params.coin.split(',');

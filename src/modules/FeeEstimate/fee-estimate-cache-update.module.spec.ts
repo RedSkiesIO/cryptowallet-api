@@ -24,12 +24,14 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '../../config/config.module';
 import { ConfigService } from '../../config/config.service';
 import { FeeEstimateCacheUpdateModule } from './fee-estimate-cache-update.module';
+import { AuthModule } from '../Auth/auth.module';
 
 describe('FeeEstimateCacheUpdate module', () => {
   let app: INestApplication;
   let mongoServer;
   let feeEstimateCacheUpdateModule;
   let feeEstimateService;
+  let token;
 
   beforeEach(async () => {
     mongoServer = new MongoMemoryServer();
@@ -37,6 +39,7 @@ describe('FeeEstimateCacheUpdate module', () => {
 
     const module = await Test.createTestingModule({
       imports: [
+        AuthModule,
         ConfigModule,
         MongooseModule.forRoot(mongoUri, { useNewUrlParser: true }),
         FeeEstimateCacheUpdateModule,
@@ -50,11 +53,14 @@ describe('FeeEstimateCacheUpdate module', () => {
 
     app = module.createNestApplication();
     await app.init();
+
+    const response = await request(app.getHttpServer()).get('/auth/token/:fake');
+    token = response.body.accessToken;
   });
 
   it('updates cached data when updateCache() method is called', async (done) => {
-    const response1 = await request(app.getHttpServer()).get('/fee-estimate/BTC');
-    const response2 = await request(app.getHttpServer()).get('/fee-estimate/ETH');
+    const response1 = await request(app.getHttpServer()).get('/fee-estimate/BTC').set('Authorization', `Bearer ${token}`);
+    const response2 = await request(app.getHttpServer()).get('/fee-estimate/ETH').set('Authorization', `Bearer ${token}`);
 
     const coinData1 = await feeEstimateService.findOne({ code: 'BTC' });
     const coinData2 = await feeEstimateService.findOne({ code: 'ETH' });

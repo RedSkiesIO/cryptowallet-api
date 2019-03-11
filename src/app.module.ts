@@ -18,15 +18,16 @@ import envConfig from './config/envConfig';
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from './config/config.module';
-import { ConfigService } from './config/config.service';
 import { PriceFeedModule } from './modules/PriceFeed/price-feed.module';
 import { PriceHistoryModule } from './modules/PriceHistory/price-history.module';
 import { FeeEstimateModule } from './modules/FeeEstimate/fee-estimate.module';
+import { AuthModule } from './modules/Auth/auth.module';
 
 @Module({
   imports: [
     ConfigModule,
     MongooseModule.forRoot(envConfig.DB_URL, { useNewUrlParser: true }),
+    AuthModule,
     PriceFeedModule,
     PriceHistoryModule,
     FeeEstimateModule,
