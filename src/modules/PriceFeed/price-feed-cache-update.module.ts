@@ -27,7 +27,10 @@ import { PriceFeedDataInterfaceKeys } from './interfaces/price-feed-data.interfa
 import { CacheUpdate } from '../../abstract/CacheUpdate';
 import { AuthModule } from '../Auth/auth.module';
 
-const bugsnagClient = bugsnag(envConfig.BUGSNAG_KEY);
+const bugsnagClient = bugsnag({
+  apiKey: envConfig.BUGSNAG_KEY,
+  logger: null,
+});
 
 @Module({
   imports: [

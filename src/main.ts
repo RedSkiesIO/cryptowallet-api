@@ -19,10 +19,15 @@ import envConfig from './config/envConfig';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 
-const bugsnagClient = bugsnag(envConfig.BUGSNAG_KEY);
+const bugsnagClient = bugsnag({
+  apiKey: envConfig.BUGSNAG_KEY,
+  logger: null,
+});
+
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.enableCors({ exposedHeaders: ['new_refresh_token'] });
   await app.listen(parseInt(envConfig.PORT, 10));
 }
 

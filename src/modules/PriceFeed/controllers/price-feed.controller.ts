@@ -27,8 +27,10 @@ import { PriceFeedData, PriceFeedDataInterfaceKeys } from '../interfaces/price-f
 import { JwtAuthGuard } from '../../Auth/guards/jwt-auth.guard';
 import { AuthResponseInterceptor } from '../../Auth/interceptors/auth-response.interceptor';
 
-const bugsnagClient = bugsnag(envConfig.BUGSNAG_KEY);
-
+const bugsnagClient = bugsnag({
+  apiKey: envConfig.BUGSNAG_KEY,
+  logger: null,
+});
 @Controller('price-feed')
 @UseGuards(PriceFeedGuard)
 export class PriceFeedController {

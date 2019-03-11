@@ -75,7 +75,7 @@ describe('FeeEstimateCacheUpdate module', () => {
       expect(coinData2.timestamp < coinData2After.timestamp).toBe(true);
 
       done();
-    }, 2000);
+    }, 3000);
   });
 
   afterAll(async () => {

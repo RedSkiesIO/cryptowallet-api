@@ -18,10 +18,14 @@ import { Injectable, NestInterceptor, ExecutionContext } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AuthService } from '../auth.service';
+import { ConfigService } from '../../../config/config.service';
 
 @Injectable()
 export class AuthResponseInterceptor implements NestInterceptor {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {}
 
   intercept(
     context: ExecutionContext,
@@ -32,7 +36,8 @@ export class AuthResponseInterceptor implements NestInterceptor {
         const req = context.switchToHttp().getRequest();
         const accessToken = req.headers.authorization.replace('Bearer ', '');
         const decoded: any = await this.authService.decodeToken(accessToken);
-        const newRefreshToken = await this.authService.createToken(decoded.deviceIdHash, 3600 * 24 * 31);
+        const refreshTokenLifespan = parseInt(this.configService.get('REFRESH_TOKEN_LIFESPAN_SEC'), 10);
+        const newRefreshToken = await this.authService.createToken(decoded.deviceIdHash, refreshTokenLifespan);
 
         await this.authService.update({ deviceIdHash: decoded.deviceIdHash }, { refreshTokens: [newRefreshToken] });
         req.res.header('new_refresh_token', newRefreshToken);

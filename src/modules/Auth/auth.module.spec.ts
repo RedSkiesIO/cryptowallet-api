@@ -168,15 +168,17 @@ describe('AuthModule', () => {
         expect(typeof response.header.new_refresh_token).toBe('string');
         expect(refreshToken !== response.header.new_refresh_token).toBe(true);
 
-        response = await request(app.getHttpServer())
-          .post('/auth/refresh')
-          .send({ refresh_token: response.header.new_refresh_token })
-          .expect(201)
-          .expect('Content-Type', /json/);
+        setTimeout(async () => {
+          response = await request(app.getHttpServer())
+            .post('/auth/refresh')
+            .send({ refresh_token: response.header.new_refresh_token })
+            .expect(201)
+            .expect('Content-Type', /json/);
 
-        expect(typeof response.body.accessToken).toBe('string');
-        expect(typeof response.body.refreshToken).toBe('string');
-        done();
+          expect(typeof response.body.accessToken).toBe('string');
+          expect(typeof response.body.refreshToken).toBe('string');
+          done();
+        }, 1000);
       });
     });
   });

@@ -42,7 +42,7 @@ export class AuthController {
     const device = await this.authService.findOne({ deviceIdHash });
 
     const accessTokenLifespan = parseInt(this.configService.get('ACCESS_TOKEN_LIFESPAN_SEC'), 10);
-    const refreshTokenLifespan = parseInt(this.configService.get('ACCESS_TOKEN_LIFESPAN_SEC'), 10);
+    const refreshTokenLifespan = parseInt(this.configService.get('REFRESH_TOKEN_LIFESPAN_SEC'), 10);
 
     const accessToken = await this.authService.createToken(deviceIdHash, accessTokenLifespan);
     const refreshToken = await this.authService.createToken(deviceIdHash, refreshTokenLifespan);
@@ -69,6 +69,12 @@ export class AuthController {
   @Post('refresh')
   async refreshToken(@Body() body): Promise<any> {
     const decoded: any = await this.authService.decodeToken(body.refresh_token);
+
+    const currentTime = new Date().getTime() / 1000;
+    if (currentTime > decoded.exp) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+    }
+
     const deviceIdHash = decoded.deviceIdHash;
 
     const device = await this.authService.findOne({ deviceIdHash });
@@ -78,7 +84,7 @@ export class AuthController {
 
     if (device.refreshTokens.includes(body.refresh_token)) {
       const accessTokenLifespan = parseInt(this.configService.get('ACCESS_TOKEN_LIFESPAN_SEC'), 10);
-      const refreshTokenLifespan = parseInt(this.configService.get('ACCESS_TOKEN_LIFESPAN_SEC'), 10);
+      const refreshTokenLifespan = parseInt(this.configService.get('REFRESH_TOKEN_LIFESPAN_SEC'), 10);
 
       const accessToken = await this.authService.createToken(deviceIdHash, accessTokenLifespan);
       const refreshToken = await this.authService.createToken(deviceIdHash, refreshTokenLifespan);
