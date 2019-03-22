@@ -17,7 +17,7 @@
 import { Document } from 'mongoose';
 
 export interface FeeEstimate extends Document {
-  public code: string;
-  public timestamp: number;
-  public data: object;
+  code: string;
+  timestamp: number;
+  data: object;
 }

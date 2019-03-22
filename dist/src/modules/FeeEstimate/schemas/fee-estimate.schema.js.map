@@ -1,0 +1,1 @@
+{"version":3,"file":"fee-estimate.schema.js","sourceRoot":"","sources":["../../../../../src/modules/FeeEstimate/schemas/fee-estimate.schema.ts"],"names":[],"mappings":";;AAgBA,qCAAqC;AAErC,MAAM,WAAW,GAAW;IAC1B,IAAI,EAAE,MAAM;IACZ,SAAS,EAAE,MAAM;IACjB,IAAI,EAAE,MAAM;CACb,CAAC;AAEW,QAAA,iBAAiB,GAAG,IAAI,QAAQ,CAAC,MAAM,CAAC,WAAW,CAAC,CAAC"}

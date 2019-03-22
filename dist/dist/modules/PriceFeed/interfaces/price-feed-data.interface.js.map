@@ -1,0 +1,1 @@
+{"version":3,"file":"price-feed-data.interface.js","sourceRoot":"","sources":["../../../../modules/PriceFeed/interfaces/price-feed-data.interface.js"],"names":[],"mappings":"AAAA,YAAY,CAAC;AACb,MAAM,CAAC,cAAc,CAAC,OAAO,EAAE,YAAY,EAAE,EAAE,KAAK,EAAE,IAAI,EAAE,CAAC,CAAC;AAC9D,OAAO,CAAC,0BAA0B,GAAG;IACjC,gBAAgB;IAChB,OAAO;IACP,iBAAiB;CACpB,CAAC"}

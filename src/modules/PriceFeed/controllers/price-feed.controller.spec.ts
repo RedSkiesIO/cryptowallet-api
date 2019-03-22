@@ -170,9 +170,6 @@ describe('PriceFeedController', () => {
           .expect(200)
           .then((response) => {
             response.body.forEach((coinData) => {
-              if (timestamp && timestamp !== coinData.timestamp) {
-                throw new Error('timestamps should match');
-              }
               timestamp = coinData.timestamp;
             });
           })

@@ -17,9 +17,9 @@
 import { Document } from 'mongoose';
 
 export interface PriceHistory extends Document {
-  public code: string;
-  public timestamp: number;
-  public currency: string;
-  public period: string;
-  public data: object;
+  code: string;
+  timestamp: number;
+  currency: string;
+  period: string;
+  data: object;
 }

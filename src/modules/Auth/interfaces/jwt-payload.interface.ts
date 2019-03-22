@@ -15,5 +15,5 @@
 // along with cryptowallet-api.  If not, see <http://www.gnu.org/licenses/>.
 
 export interface JwtPayload {
-  public deviceIdHash: string;
+  deviceIdHash: string;
 }

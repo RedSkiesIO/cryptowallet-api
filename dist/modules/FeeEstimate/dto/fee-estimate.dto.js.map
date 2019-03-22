@@ -1,0 +1,1 @@
+{"version":3,"file":"fee-estimate.dto.js","sourceRoot":"","sources":["../../../../src/modules/FeeEstimate/dto/fee-estimate.dto.ts"],"names":[],"mappings":";;AAgBA,MAAa,cAAc;IAKzB,YAAY,OAAO;QACjB,IAAI,CAAC,IAAI,GAAG,OAAO,CAAC,IAAI,CAAC;QACzB,IAAI,CAAC,SAAS,GAAG,OAAO,CAAC,SAAS,CAAC;QACnC,IAAI,CAAC,IAAI,GAAG,OAAO,CAAC,IAAI,CAAC;IAC3B,CAAC;CACF;AAVD,wCAUC"}
