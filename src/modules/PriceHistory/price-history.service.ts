@@ -65,7 +65,7 @@ export class PriceHistoryService extends AbstractService<PriceHistory, PriceHist
       }
 
       if (response.data.Response && response.data.Response === 'Error') {
-        throw new HttpException(`Internal Server Error. ${response.Response.Message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+        throw new HttpException(`Internal Server Error. ${response.Message}`, HttpStatus.INTERNAL_SERVER_ERROR);
       }
 
       return response;

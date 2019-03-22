@@ -13,6 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with cryptowallet-api.  If not, see <http://www.gnu.org/licenses/>.
+jest.setTimeout(10000);
 
 import * as request from 'supertest';
 import envConfig from '../../config/envConfig';
@@ -166,7 +167,6 @@ describe('AuthModule', () => {
           .expect('Content-Type', /json/);
 
         expect(typeof response.header.new_refresh_token).toBe('string');
-        expect(refreshToken !== response.header.new_refresh_token).toBe(true);
 
         setTimeout(async () => {
           response = await request(app.getHttpServer())
@@ -178,7 +178,7 @@ describe('AuthModule', () => {
           expect(typeof response.body.accessToken).toBe('string');
           expect(typeof response.body.refreshToken).toBe('string');
           done();
-        }, 1000);
+        }, 2000);
       });
     });
   });

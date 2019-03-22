@@ -13,6 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with cryptowallet-api.  If not, see <http://www.gnu.org/licenses/>.
+jest.setTimeout(10000);
 
 import * as request from 'supertest';
 import envConfig from '../../config/envConfig';
