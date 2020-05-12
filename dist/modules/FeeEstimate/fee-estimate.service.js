@@ -55,7 +55,7 @@ let FeeEstimateService = class FeeEstimateService extends AbstractService_1.Abst
                 if (code === 'ETH') {
                     data.high = response.data.high_gas_price;
                     data.medium = response.data.medium_gas_price;
-                    data.low = response.data.medium_gas_price;
+                    data.low = response.data.low_gas_price;
                 }
                 return data;
             }
