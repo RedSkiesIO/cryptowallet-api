@@ -67,17 +67,22 @@ export class PriceFeedService extends AbstractService<PriceFeed, PriceFeedDto> {
     // const cryptoCompareKey = this.configService.get('CRYPTO_COMPARE_KEY');
     // const cryptoCompareURL = this.configService.get('CRYPTO_COMPARE_URL');
     // const URL = `${cryptoCompareURL}/data/pricemultifull?fsyms=${code}&tsyms=${supportedCurrencies}&api_key=${cryptoCompareKey}`;
-
+    const isERC20 = new RegExp('^0x[a-fA-F0-9]{40}$').test(code);
+    const apiCall = isERC20 ? 'fetchTokenPrice' : 'price';
     try {
-      // const response: any = await axios.get(URL);
-      const response = await coinGecko.simple.price({
-        ids: code,
+      const params: any = {
         vs_currencies: supportedCurrencies,
         include_market_cap: true,
         include_24hr_vol: true,
         include_24hr_change: true,
-
-    });
+    }
+    if(isERC20) {
+      params.contract_addresses = code;
+    } else {
+      params.ids = code;
+    }
+      // const response: any = await axios.get(URL);
+      const response = await coinGecko.simple[apiCall](params);
 
     console.log(response);
 

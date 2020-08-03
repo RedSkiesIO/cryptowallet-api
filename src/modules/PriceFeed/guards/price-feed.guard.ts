@@ -39,7 +39,7 @@ export class PriceFeedGuard implements CanActivate {
     } = params;
 
     const validCoins: boolean = coin.split(',').every((code) => {
-      return new RegExp('^[a-zA-Z0-9-+]{0,20}$').test(code);
+      return new RegExp('^[a-zA-Z0-9-+]{0,42}$').test(code);
     });
 
     const requestedCurrencies = currency.split(',');
