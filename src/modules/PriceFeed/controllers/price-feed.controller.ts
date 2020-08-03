@@ -92,11 +92,14 @@ export class PriceFeedController {
     };
 
     supportedCurrencies.forEach((currency) => {
-      const filtered = {};
-      PriceFeedDataInterfaceKeys.forEach((key) => {
-        filtered[key] = response.data.RAW[code][currency][key];
-      });
-
+      const fiat = currency.toLowerCase();
+      const filtered = {
+        TOTALVOLUME24HOURTO: response.data[code][`${fiat}_24h_vol`],
+        PRICE: response.data[code][fiat],
+        CHANGEPCT24HOUR: response.data[code][`${fiat}_24h_change`],
+        MKTCAP: response.data[code][`${fiat}_market_cap`],
+      };
+     
       dtoRaw[currency] = filtered;
     });
 
