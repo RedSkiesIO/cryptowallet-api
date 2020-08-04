@@ -40,7 +40,7 @@ export class PriceHistoryGuard implements CanActivate {
       period,
     } = params;
 
-    const validCoin: boolean = new RegExp('^[A-Z]{0,10}$').test(coin);
+    const validCoin: boolean = new RegExp('^[a-zA-Z0-9-+]{0,42}$').test(coin);
 
     const requestedCurrencies = params.currency.split(',');
     const validCurrency: boolean = new RegExp('^[A-Z]{0,3}$').test(currency);

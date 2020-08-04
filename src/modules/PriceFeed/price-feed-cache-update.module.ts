@@ -62,7 +62,8 @@ export class PriceFeedCacheUpdateModule extends CacheUpdate {
     try {
       const supportedCurrencies = this.configService.get('CURRENCIES').split(',');
       const { code } = document;
-      const freshData: any = await this.service.fetchExternalApi(code);
+      console.log(code);
+      const response: any = await this.service.fetchExternalApi(code);
 
       const dtoRaw: Partial<DTO> = {
         code,
@@ -70,10 +71,13 @@ export class PriceFeedCacheUpdateModule extends CacheUpdate {
       };
 
       supportedCurrencies.forEach((currency) => {
-        const filtered = {};
-        PriceFeedDataInterfaceKeys.forEach((key) => {
-          filtered[key] = freshData.data.RAW[code][currency][key];
-        });
+        const fiat = currency.toLowerCase();
+        const filtered = {
+          TOTALVOLUME24HOURTO: response.data[code][`${fiat}_24h_vol`],
+          PRICE: response.data[code][fiat],
+          CHANGEPCT24HOUR: response.data[code][`${fiat}_24h_change`],
+          MKTCAP: response.data[code][`${fiat}_market_cap`],
+        };
 
         dtoRaw[currency] = filtered;
       });
