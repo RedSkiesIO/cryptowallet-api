@@ -44,13 +44,17 @@ export abstract class CacheUpdate {
       operations.push((callback) => this.updateDocument(document, callback));
     });
 
-    return new Promise((resolve) => {
-      series(operations, (err) => {
-        if (err) {
-          // @todo integrate rollbar
-        }
-        resolve();
-      });
+    return new Promise(async (resolve) => {
+      // series(operations, (err) => {
+      //   if (err) {
+      //     console.log('error', err);
+      //     // @todo integrate rollbar
+      //   }
+      // });
+      for (const fn of operations) {
+        await fn() // call function to get returned Promise
+      }
+      resolve();
     });
   }
 }

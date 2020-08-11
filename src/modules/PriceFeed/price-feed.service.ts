@@ -15,6 +15,7 @@
 // along with cryptowallet-api.  If not, see <http://www.gnu.org/licenses/>.
 
 import axios from 'axios';
+// import CoinGecko from 'coingecko-api';
 import { AbstractService } from '../../abstract/AbstractService';
 import { Model } from 'mongoose';
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
@@ -23,30 +24,22 @@ import { PriceFeed } from './interfaces/price-feed.interface';
 import { PriceFeedDto } from './dto/price-feed.dto';
 import { ConfigService } from '../../config/config.service';
 
+const CoinGecko = require('coingecko-api');
+
+const coinGecko = new CoinGecko();
 @Injectable()
 export class PriceFeedService extends AbstractService<PriceFeed, PriceFeedDto> {
   constructor(@InjectModel('PriceFeed') protected readonly model: Model<PriceFeed>, private readonly configService: ConfigService) {
     super();
   }
 
-  async fetchExternalApi(code: string): Promise<any> {
+
+  async fetchExternalApi(code: string, oldApi: boolean): Promise<any> {
     const supportedCurrencies = this.configService.get('CURRENCIES').split(',');
-    const cryptoCompareKey = this.configService.get('CRYPTO_COMPARE_KEY');
-    const cryptoCompareURL = this.configService.get('CRYPTO_COMPARE_URL');
-    const URL = `${cryptoCompareURL}/data/pricemultifull?fsyms=${code}&tsyms=${supportedCurrencies}&api_key=${cryptoCompareKey}`;
-
     try {
-      const response: any = await axios.get(URL);
+      if(oldApi) return this.fetchCryptoCompareApi(code, supportedCurrencies);
 
-      if (response.status !== 200) {
-        throw new HttpException(`Internal Server Error.`, HttpStatus.INTERNAL_SERVER_ERROR);
-      }
-
-      if (response.data.Response && response.data.Response === 'Error') {
-        throw new HttpException(`Internal Server Error. ${response.Message}`, HttpStatus.INTERNAL_SERVER_ERROR);
-      }
-
-      return response;
+      return this.fetchCoinGeckoApi(code, supportedCurrencies);
     } catch (err) {
       if (err.response) {
         throw new Error(`External API: ${err.response.status}`);
@@ -57,4 +50,52 @@ export class PriceFeedService extends AbstractService<PriceFeed, PriceFeedDto> {
       }
     }
   }
+
+  async fetchCoinGeckoApi(code: string, supportedCurrencies: any): Promise<any> {
+    const isERC20 = new RegExp('^0x[a-fA-F0-9]{40}$').test(code);
+    const apiCall = isERC20 ? 'fetchTokenPrice' : 'price';
+
+      const params: any = {
+        vs_currencies: supportedCurrencies,
+        include_market_cap: true,
+        include_24hr_vol: true,
+        include_24hr_change: true,
+    }
+    if(isERC20) {
+      params.contract_addresses = code;
+    } else {
+      params.ids = code;
+    }
+      const response = await coinGecko.simple[apiCall](params);
+
+      if (response.code !== 200) {
+        throw new HttpException(`Internal Server Error.`, HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+
+      if (!response.data || JSON.stringify(response.data) === '{}') {
+        throw new HttpException(`Internal Server Error.`, HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+
+      return response;
+
+  }
+
+  async fetchCryptoCompareApi(code: string, supportedCurrencies: any): Promise<any> {
+    const cryptoCompareKey = this.configService.get('CRYPTO_COMPARE_KEY');
+    const cryptoCompareURL = this.configService.get('CRYPTO_COMPARE_URL');
+    const URL = `${cryptoCompareURL}/data/pricemultifull?fsyms=${code}&tsyms=${supportedCurrencies}&api_key=${cryptoCompareKey}`;
+    const response: any = await axios.get(URL);
+
+      if (response.status !== 200) {
+        throw new HttpException(`Internal Server Error.`, HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+
+      if (response.data.Response && response.data.Response === 'Error') {
+        throw new HttpException(`Internal Server Error. ${response.Message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+
+      return response;
+  }
+
+
 }

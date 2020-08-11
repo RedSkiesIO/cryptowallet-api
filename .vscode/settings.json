@@ -1,0 +1,8 @@
+{
+  "appService.zipIgnorePattern": [
+    "node_modules{,/**}",
+    ".vscode{,/**}"
+  ],
+  "appService.defaultWebAppToDeploy": "/subscriptions/1232e929-30b6-4eda-b977-1116961439c8/resourceGroups/cryptowallet/providers/Microsoft.Web/sites/cryptowallet-api",
+  "appService.deploySubpath": ""
+}

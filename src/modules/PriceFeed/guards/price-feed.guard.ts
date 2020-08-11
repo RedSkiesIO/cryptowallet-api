@@ -39,12 +39,12 @@ export class PriceFeedGuard implements CanActivate {
     } = params;
 
     const validCoins: boolean = coin.split(',').every((code) => {
-      return new RegExp('^[A-Z]{0,10}$').test(code);
+      return new RegExp('^[a-zA-Z0-9-+]{0,42}$').test(code);
     });
 
     const requestedCurrencies = currency.split(',');
     const validCurrencies: boolean = requestedCurrencies.every((currencyCode) => {
-      return new RegExp('^[A-Z]{0,3}$').test(currencyCode);
+      return new RegExp('^[a-zA-Z]{0,3}$').test(currencyCode);
     });
 
     const supportedCurrencies = this.configService.get('CURRENCIES').split(',');

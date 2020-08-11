@@ -22,7 +22,7 @@ export interface PriceFeedData {
 }
 
 export const PriceFeedDataInterfaceKeys = [
-  'TOTALVOLUME24HTO',
+  'TOTALVOLUME24HOURTO',
   'PRICE',
   'CHANGEPCT24HOUR',
   'MKTCAP',

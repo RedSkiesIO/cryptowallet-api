@@ -23,52 +23,61 @@ import { PriceHistory } from './interfaces/price-history.interface';
 import { PriceHistoryDto } from './dto/price-history.dto';
 import { ConfigService } from '../../config/config.service';
 
+const CoinGecko = require('coingecko-api');
+
+const coinGecko = new CoinGecko();
+
 @Injectable()
 export class PriceHistoryService extends AbstractService<PriceHistory, PriceHistoryDto> {
   constructor(@InjectModel('PriceHistory') protected readonly model: Model<PriceHistory>, private readonly configService: ConfigService) {
     super();
   }
 
+
   async fetchExternalApi(code: string, currency: string, period: string): Promise<any> {
-    let histoType;
-    let limit;
+    let days;
 
     switch (period) {
       case 'day':
-        histoType = 'hour';
-        limit = 24;
+        days = 1;
         break;
 
       case 'week':
-        histoType = 'hour';
-        limit = 168;
+       days = 7;
         break;
 
       case 'month':
-        histoType = 'day';
-        limit = 31;
+        days = 30;
         break;
 
       default:
         throw new HttpException('Internal Server Error', HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    const cryptoCompareKey = this.configService.get('CRYPTO_COMPARE_KEY');
-    const cryptoCompareURL = this.configService.get('CRYPTO_COMPARE_URL');
-    const URL = `${cryptoCompareURL}/data/histo${histoType}?fsym=${code}&tsym=${currency}&limit=${limit}&api_key=${cryptoCompareKey}`;
-
+    const isERC20 = new RegExp('^0x[a-fA-F0-9]{40}$').test(code);
+    const apiCall = isERC20 ? 'fetchCoinContractMarketChart' : 'fetchMarketChart';
     try {
-      const response: any = await axios.get(URL);
+      const params: any = {
+        days,
+        vs_currencies: currency,
+    }
+    
+      const response = await coinGecko.coins[apiCall](code.toLowerCase(), isERC20 ? 'ethereum' : params, isERC20 ? params : null);
 
-      if (response.status !== 200) {
+      if (response.code !== 200) {
         throw new HttpException(`Internal Server Error.`, HttpStatus.INTERNAL_SERVER_ERROR);
       }
 
-      if (response.data.Response && response.data.Response === 'Error') {
-        throw new HttpException(`Internal Server Error. ${response.Message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+      if (!response.data || !response.data.prices) {
+        throw new HttpException(`Internal Server Error. No data returned`, HttpStatus.INTERNAL_SERVER_ERROR);
       }
 
-      return response;
+      return response.data.prices.map((price) => {
+        return {
+          t: price[0],
+          y: price[1],
+        }
+      });
     } catch (err) {
       if (err.response) {
         throw new Error(`External API: ${err.response.status}`);

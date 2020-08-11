@@ -57,12 +57,12 @@ export class PriceHistoryController {
     }
 
     const response = await this.priceHistoryService.fetchExternalApi(code, currency, period);
-
+    console.log(response);
     const dto = new PriceHistoryDto({
       code,
       currency,
       period,
-      data: response.data.Data,
+      data: response,
       timestamp: Math.round(+new Date() / 1000),
     });
 

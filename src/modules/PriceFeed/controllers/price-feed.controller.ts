@@ -82,15 +82,28 @@ export class PriceFeedController {
     if (result) {
       return result;
     }
+    const oldApi = new RegExp('^[A-Z]{0,10}$').test(code);
 
-    const response = await this.priceFeedService.fetchExternalApi(code);
+    const response = await this.priceFeedService.fetchExternalApi(code, oldApi);
     const timestamp = Math.round(+new Date() / 1000);
 
     const dtoRaw: Partial<DTO> = {
       code,
       timestamp,
     };
-
+    if (!oldApi) {
+    supportedCurrencies.forEach((currency) => {
+      const fiat = currency.toLowerCase();
+      const filtered = {
+        TOTALVOLUME24HOURTO: response.data[code][`${fiat}_24h_vol`],
+        PRICE: response.data[code][fiat],
+        CHANGEPCT24HOUR: response.data[code][`${fiat}_24h_change`],
+        MKTCAP: response.data[code][`${fiat}_market_cap`],
+      };
+     
+      dtoRaw[currency] = filtered;
+    });
+   } else {
     supportedCurrencies.forEach((currency) => {
       const filtered = {};
       PriceFeedDataInterfaceKeys.forEach((key) => {
@@ -99,6 +112,9 @@ export class PriceFeedController {
 
       dtoRaw[currency] = filtered;
     });
+  }
+
+    
 
     const dto = new PriceFeedDto(dtoRaw);
     await this.priceFeedService.create(dto);
