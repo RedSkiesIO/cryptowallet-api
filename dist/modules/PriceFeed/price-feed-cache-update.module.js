@@ -43,7 +43,6 @@ let PriceFeedCacheUpdateModule = class PriceFeedCacheUpdateModule extends CacheU
             try {
                 const supportedCurrencies = this.configService.get('CURRENCIES').split(',');
                 const { code } = document;
-                console.log(code);
                 const oldApi = new RegExp('^[A-Z]{0,10}$').test(code);
                 const response = yield this.service.fetchExternalApi(code, oldApi);
                 const dtoRaw = {
