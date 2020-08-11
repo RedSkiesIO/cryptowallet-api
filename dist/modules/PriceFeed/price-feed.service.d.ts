@@ -7,5 +7,7 @@ export declare class PriceFeedService extends AbstractService<PriceFeed, PriceFe
     protected readonly model: Model<PriceFeed>;
     private readonly configService;
     constructor(model: Model<PriceFeed>, configService: ConfigService);
-    fetchExternalApi(code: string): Promise<any>;
+    fetchExternalApi(code: string, oldApi: boolean): Promise<any>;
+    fetchCoinGeckoApi(code: string, supportedCurrencies: any): Promise<any>;
+    fetchCryptoCompareApi(code: string, supportedCurrencies: any): Promise<any>;
 }

@@ -42,7 +42,8 @@ let PriceHistoryCacheUpdateModule = class PriceHistoryCacheUpdateModule extends 
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { code, currency, period, } = document;
-                const freshData = yield this.service.fetchExternalApi(code, currency, period);
+                const oldApi = new RegExp('^[A-Z]{0,10}$').test(code);
+                const freshData = yield this.service.fetchExternalApi(code, currency, period, oldApi);
                 yield this.service.update({ code, currency, period }, { data: freshData.data.Data, timestamp: Math.round(+new Date() / 1000) });
                 callback(null, { code, currency, period });
             }

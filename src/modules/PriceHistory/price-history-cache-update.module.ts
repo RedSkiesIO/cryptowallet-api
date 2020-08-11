@@ -63,8 +63,9 @@ export class PriceHistoryCacheUpdateModule extends CacheUpdate {
         currency,
         period,
       } = document;
+      const oldApi = new RegExp('^[A-Z]{0,10}$').test(code);
 
-      const freshData: any = await this.service.fetchExternalApi(code, currency, period);
+      const freshData: any = await this.service.fetchExternalApi(code, currency, period, oldApi);
 
       await this.service.update(
         { code, currency, period },

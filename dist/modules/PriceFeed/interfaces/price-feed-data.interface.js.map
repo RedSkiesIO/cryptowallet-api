@@ -1,1 +1,1 @@
-{"version":3,"file":"price-feed-data.interface.js","sourceRoot":"","sources":["../../../../src/modules/PriceFeed/interfaces/price-feed-data.interface.ts"],"names":[],"mappings":";;AAuBa,QAAA,0BAA0B,GAAG;IACxC,kBAAkB;IAClB,OAAO;IACP,iBAAiB;IACjB,QAAQ;CACT,CAAC"}
+{"version":3,"file":"price-feed-data.interface.js","sourceRoot":"","sources":["../../../../src/modules/PriceFeed/interfaces/price-feed-data.interface.ts"],"names":[],"mappings":";;AAuBa,QAAA,0BAA0B,GAAG;IACxC,qBAAqB;IACrB,OAAO;IACP,iBAAiB;IACjB,QAAQ;CACT,CAAC"}
