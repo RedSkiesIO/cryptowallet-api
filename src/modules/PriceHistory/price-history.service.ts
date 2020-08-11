@@ -34,7 +34,64 @@ export class PriceHistoryService extends AbstractService<PriceHistory, PriceHist
   }
 
 
-  async fetchExternalApi(code: string, currency: string, period: string): Promise<any> {
+  async fetchExternalApi(code: string, currency: string, period: string, oldApi: boolean): Promise<any> {
+    try {
+      if(oldApi) return this.fetchCryptoCompareApi(code, currency, period);
+      return this.fetchCoinGeckoApi(code, currency, period);
+    } catch (err) {
+      if (err.response) {
+        throw new Error(`External API: ${err.response.status}`);
+      } else if (err.request) { 
+        throw new Error(`External API: no response received`);
+      } else {
+        throw new Error(err.message);
+      }
+    }
+  }
+
+  async fetchCryptoCompareApi(code: string, currency: string, period: string): Promise<any> {
+    let histoType;
+    let limit;
+
+    switch (period) {
+      case 'day':
+        histoType = 'hour';
+        limit = 24;
+        break;
+
+      case 'week':
+        histoType = 'hour';
+        limit = 168;
+        break;
+
+      case 'month':
+        histoType = 'day';
+        limit = 31;
+        break;
+
+      default:
+        throw new HttpException('Internal Server Error', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    const cryptoCompareKey = this.configService.get('CRYPTO_COMPARE_KEY');
+    const cryptoCompareURL = this.configService.get('CRYPTO_COMPARE_URL');
+    const URL = `${cryptoCompareURL}/data/histo${histoType}?fsym=${code}&tsym=${currency}&limit=${limit}&api_key=${cryptoCompareKey}`;
+
+    
+      const response: any = await axios.get(URL);
+
+      if (response.status !== 200) {
+        throw new HttpException(`Internal Server Error.`, HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+
+      if (response.data.Response && response.data.Response === 'Error') {
+        throw new HttpException(`Internal Server Error. ${response.Message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+
+      return response;
+  }
+
+  async fetchCoinGeckoApi(code: string, currency: string, period: string): Promise<any> {
     let days;
 
     switch (period) {
@@ -56,8 +113,7 @@ export class PriceHistoryService extends AbstractService<PriceHistory, PriceHist
 
     const isERC20 = new RegExp('^0x[a-fA-F0-9]{40}$').test(code);
     const apiCall = isERC20 ? 'fetchCoinContractMarketChart' : 'fetchMarketChart';
-    try {
-      const params: any = {
+    const params: any = {
         days,
         vs_currencies: currency,
     }
@@ -78,14 +134,6 @@ export class PriceHistoryService extends AbstractService<PriceHistory, PriceHist
           y: price[1],
         }
       });
-    } catch (err) {
-      if (err.response) {
-        throw new Error(`External API: ${err.response.status}`);
-      } else if (err.request) {
-        throw new Error(`External API: no response received`);
-      } else {
-        throw new Error(err.message);
-      }
-    }
   }
+
 }

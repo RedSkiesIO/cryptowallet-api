@@ -55,8 +55,9 @@ export class PriceHistoryController {
     if (result) {
       return result;
     }
+    const oldApi = new RegExp('^[A-Z]{0,10}$').test(code);
 
-    const response = await this.priceHistoryService.fetchExternalApi(code, currency, period);
+    const response = await this.priceHistoryService.fetchExternalApi(code, currency, period, oldApi);
     console.log(response);
     const dto = new PriceHistoryDto({
       code,
