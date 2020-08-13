@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PriceFeedDataInterfaceKeys = [
-    'TOTALVOLUME24HTO',
+    'TOTALVOLUME24HOURTO',
     'PRICE',
     'CHANGEPCT24HOUR',
     'MKTCAP',

@@ -25,7 +25,6 @@ const price_feed_controller_1 = require("./controllers/price-feed.controller");
 const price_feed_service_1 = require("./price-feed.service");
 const price_feed_schema_1 = require("./schemas/price-feed.schema");
 const config_service_1 = require("../../config/config.service");
-const price_feed_data_interface_1 = require("./interfaces/price-feed-data.interface");
 const CacheUpdate_1 = require("../../abstract/CacheUpdate");
 const auth_module_1 = require("../Auth/auth.module");
 const bugsnagClient = js_1.default({
@@ -44,16 +43,20 @@ let PriceFeedCacheUpdateModule = class PriceFeedCacheUpdateModule extends CacheU
             try {
                 const supportedCurrencies = this.configService.get('CURRENCIES').split(',');
                 const { code } = document;
-                const freshData = yield this.service.fetchExternalApi(code);
+                const oldApi = new RegExp('^[A-Z]{0,10}$').test(code);
+                const response = yield this.service.fetchExternalApi(code, oldApi);
                 const dtoRaw = {
                     code,
                     timestamp: Math.round(+new Date() / 1000),
                 };
                 supportedCurrencies.forEach((currency) => {
-                    const filtered = {};
-                    price_feed_data_interface_1.PriceFeedDataInterfaceKeys.forEach((key) => {
-                        filtered[key] = freshData.data.RAW[code][currency][key];
-                    });
+                    const fiat = currency.toLowerCase();
+                    const filtered = {
+                        TOTALVOLUME24HOURTO: response.data[code][`${fiat}_24h_vol`],
+                        PRICE: response.data[code][fiat],
+                        CHANGEPCT24HOUR: response.data[code][`${fiat}_24h_change`],
+                        MKTCAP: response.data[code][`${fiat}_market_cap`],
+                    };
                     dtoRaw[currency] = filtered;
                 });
                 yield this.service.update({ code }, dtoRaw);

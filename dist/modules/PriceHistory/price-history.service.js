@@ -27,13 +27,35 @@ const mongoose_1 = require("mongoose");
 const common_1 = require("@nestjs/common");
 const mongoose_2 = require("@nestjs/mongoose");
 const config_service_1 = require("../../config/config.service");
+const CoinGecko = require('coingecko-api');
+const coinGecko = new CoinGecko();
 let PriceHistoryService = class PriceHistoryService extends AbstractService_1.AbstractService {
     constructor(model, configService) {
         super();
         this.model = model;
         this.configService = configService;
     }
-    fetchExternalApi(code, currency, period) {
+    fetchExternalApi(code, currency, period, oldApi) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                if (oldApi)
+                    return this.fetchCryptoCompareApi(code, currency, period);
+                return this.fetchCoinGeckoApi(code, currency, period);
+            }
+            catch (err) {
+                if (err.response) {
+                    throw new Error(`External API: ${err.response.status}`);
+                }
+                else if (err.request) {
+                    throw new Error(`External API: no response received`);
+                }
+                else {
+                    throw new Error(err.message);
+                }
+            }
+        });
+    }
+    fetchCryptoCompareApi(code, currency, period) {
         return __awaiter(this, void 0, void 0, function* () {
             let histoType;
             let limit;
@@ -56,27 +78,51 @@ let PriceHistoryService = class PriceHistoryService extends AbstractService_1.Ab
             const cryptoCompareKey = this.configService.get('CRYPTO_COMPARE_KEY');
             const cryptoCompareURL = this.configService.get('CRYPTO_COMPARE_URL');
             const URL = `${cryptoCompareURL}/data/histo${histoType}?fsym=${code}&tsym=${currency}&limit=${limit}&api_key=${cryptoCompareKey}`;
-            try {
-                const response = yield axios_1.default.get(URL);
-                if (response.status !== 200) {
-                    throw new common_1.HttpException(`Internal Server Error.`, common_1.HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-                if (response.data.Response && response.data.Response === 'Error') {
-                    throw new common_1.HttpException(`Internal Server Error. ${response.Message}`, common_1.HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-                return response;
+            const response = yield axios_1.default.get(URL);
+            if (response.status !== 200) {
+                throw new common_1.HttpException(`Internal Server Error.`, common_1.HttpStatus.INTERNAL_SERVER_ERROR);
             }
-            catch (err) {
-                if (err.response) {
-                    throw new Error(`External API: ${err.response.status}`);
-                }
-                else if (err.request) {
-                    throw new Error(`External API: no response received`);
-                }
-                else {
-                    throw new Error(err.message);
-                }
+            if (response.data.Response && response.data.Response === 'Error') {
+                throw new common_1.HttpException(`Internal Server Error. ${response.Message}`, common_1.HttpStatus.INTERNAL_SERVER_ERROR);
             }
+            return response;
+        });
+    }
+    fetchCoinGeckoApi(code, currency, period) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let days;
+            switch (period) {
+                case 'day':
+                    days = 1;
+                    break;
+                case 'week':
+                    days = 7;
+                    break;
+                case 'month':
+                    days = 30;
+                    break;
+                default:
+                    throw new common_1.HttpException('Internal Server Error', common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            const isERC20 = new RegExp('^0x[a-fA-F0-9]{40}$').test(code);
+            const apiCall = isERC20 ? 'fetchCoinContractMarketChart' : 'fetchMarketChart';
+            const params = {
+                days,
+                vs_currencies: currency,
+            };
+            const response = yield coinGecko.coins[apiCall](code.toLowerCase(), isERC20 ? 'ethereum' : params, isERC20 ? params : null);
+            if (response.code !== 200) {
+                throw new common_1.HttpException(`Internal Server Error.`, common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            if (!response.data || !response.data.prices) {
+                throw new common_1.HttpException(`Internal Server Error. No data returned`, common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            return response.data.prices.map((price) => {
+                return {
+                    t: price[0],
+                    y: price[1],
+                };
+            });
         });
     }
 };

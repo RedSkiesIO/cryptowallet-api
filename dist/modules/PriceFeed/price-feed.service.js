@@ -27,27 +27,21 @@ const mongoose_1 = require("mongoose");
 const common_1 = require("@nestjs/common");
 const mongoose_2 = require("@nestjs/mongoose");
 const config_service_1 = require("../../config/config.service");
+const CoinGecko = require('coingecko-api');
+const coinGecko = new CoinGecko();
 let PriceFeedService = class PriceFeedService extends AbstractService_1.AbstractService {
     constructor(model, configService) {
         super();
         this.model = model;
         this.configService = configService;
     }
-    fetchExternalApi(code) {
+    fetchExternalApi(code, oldApi) {
         return __awaiter(this, void 0, void 0, function* () {
             const supportedCurrencies = this.configService.get('CURRENCIES').split(',');
-            const cryptoCompareKey = this.configService.get('CRYPTO_COMPARE_KEY');
-            const cryptoCompareURL = this.configService.get('CRYPTO_COMPARE_URL');
-            const URL = `${cryptoCompareURL}/data/pricemultifull?fsyms=${code}&tsyms=${supportedCurrencies}&api_key=${cryptoCompareKey}`;
             try {
-                const response = yield axios_1.default.get(URL);
-                if (response.status !== 200) {
-                    throw new common_1.HttpException(`Internal Server Error.`, common_1.HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-                if (response.data.Response && response.data.Response === 'Error') {
-                    throw new common_1.HttpException(`Internal Server Error. ${response.Message}`, common_1.HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-                return response;
+                if (oldApi)
+                    return this.fetchCryptoCompareApi(code, supportedCurrencies);
+                return this.fetchCoinGeckoApi(code, supportedCurrencies);
             }
             catch (err) {
                 if (err.response) {
@@ -60,6 +54,47 @@ let PriceFeedService = class PriceFeedService extends AbstractService_1.Abstract
                     throw new Error(err.message);
                 }
             }
+        });
+    }
+    fetchCoinGeckoApi(code, supportedCurrencies) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const isERC20 = new RegExp('^0x[a-fA-F0-9]{40}$').test(code);
+            const apiCall = isERC20 ? 'fetchTokenPrice' : 'price';
+            const params = {
+                vs_currencies: supportedCurrencies,
+                include_market_cap: true,
+                include_24hr_vol: true,
+                include_24hr_change: true,
+            };
+            if (isERC20) {
+                params.contract_addresses = code;
+            }
+            else {
+                params.ids = code;
+            }
+            const response = yield coinGecko.simple[apiCall](params);
+            if (response.code !== 200) {
+                throw new common_1.HttpException(`Internal Server Error.`, common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            if (!response.data || JSON.stringify(response.data) === '{}') {
+                throw new common_1.HttpException(`Internal Server Error.`, common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            return response;
+        });
+    }
+    fetchCryptoCompareApi(code, supportedCurrencies) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const cryptoCompareKey = this.configService.get('CRYPTO_COMPARE_KEY');
+            const cryptoCompareURL = this.configService.get('CRYPTO_COMPARE_URL');
+            const URL = `${cryptoCompareURL}/data/pricemultifull?fsyms=${code}&tsyms=${supportedCurrencies}&api_key=${cryptoCompareKey}`;
+            const response = yield axios_1.default.get(URL);
+            if (response.status !== 200) {
+                throw new common_1.HttpException(`Internal Server Error.`, common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            if (response.data.Response && response.data.Response === 'Error') {
+                throw new common_1.HttpException(`Internal Server Error. ${response.Message}`, common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            return response;
         });
     }
 };

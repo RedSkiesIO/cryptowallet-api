@@ -62,8 +62,9 @@ export class PriceFeedCacheUpdateModule extends CacheUpdate {
     try {
       const supportedCurrencies = this.configService.get('CURRENCIES').split(',');
       const { code } = document;
-      console.log(code);
-      const response: any = await this.service.fetchExternalApi(code);
+      const oldApi = new RegExp('^[A-Z]{0,10}$').test(code);
+
+      const response: any = await this.service.fetchExternalApi(code, oldApi);
 
       const dtoRaw: Partial<DTO> = {
         code,

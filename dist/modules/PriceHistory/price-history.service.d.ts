@@ -7,5 +7,7 @@ export declare class PriceHistoryService extends AbstractService<PriceHistory, P
     protected readonly model: Model<PriceHistory>;
     private readonly configService;
     constructor(model: Model<PriceHistory>, configService: ConfigService);
-    fetchExternalApi(code: string, currency: string, period: string): Promise<any>;
+    fetchExternalApi(code: string, currency: string, period: string, oldApi: boolean): Promise<any>;
+    fetchCryptoCompareApi(code: string, currency: string, period: string): Promise<any>;
+    fetchCoinGeckoApi(code: string, currency: string, period: string): Promise<any>;
 }

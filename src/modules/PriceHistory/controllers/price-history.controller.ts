@@ -55,14 +55,15 @@ export class PriceHistoryController {
     if (result) {
       return result;
     }
+    const oldApi = new RegExp('^[A-Z]{0,10}$').test(code);
 
-    const response = await this.priceHistoryService.fetchExternalApi(code, currency, period);
-    console.log(response);
+    const response = await this.priceHistoryService.fetchExternalApi(code, currency, period, oldApi);
+
     const dto = new PriceHistoryDto({
       code,
       currency,
       period,
-      data: response,
+      data: oldApi ? response.data.Data :response,
       timestamp: Math.round(+new Date() / 1000),
     });
 

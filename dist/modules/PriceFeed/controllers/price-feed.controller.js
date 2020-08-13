@@ -64,19 +64,34 @@ let PriceFeedController = class PriceFeedController {
             if (result) {
                 return result;
             }
-            const response = yield this.priceFeedService.fetchExternalApi(code);
+            const oldApi = new RegExp('^[A-Z]{0,10}$').test(code);
+            const response = yield this.priceFeedService.fetchExternalApi(code, oldApi);
             const timestamp = Math.round(+new Date() / 1000);
             const dtoRaw = {
                 code,
                 timestamp,
             };
-            supportedCurrencies.forEach((currency) => {
-                const filtered = {};
-                price_feed_data_interface_1.PriceFeedDataInterfaceKeys.forEach((key) => {
-                    filtered[key] = response.data.RAW[code][currency][key];
+            if (!oldApi) {
+                supportedCurrencies.forEach((currency) => {
+                    const fiat = currency.toLowerCase();
+                    const filtered = {
+                        TOTALVOLUME24HOURTO: response.data[code][`${fiat}_24h_vol`],
+                        PRICE: response.data[code][fiat],
+                        CHANGEPCT24HOUR: response.data[code][`${fiat}_24h_change`],
+                        MKTCAP: response.data[code][`${fiat}_market_cap`],
+                    };
+                    dtoRaw[currency] = filtered;
                 });
-                dtoRaw[currency] = filtered;
-            });
+            }
+            else {
+                supportedCurrencies.forEach((currency) => {
+                    const filtered = {};
+                    price_feed_data_interface_1.PriceFeedDataInterfaceKeys.forEach((key) => {
+                        filtered[key] = response.data.RAW[code][currency][key];
+                    });
+                    dtoRaw[currency] = filtered;
+                });
+            }
             const dto = new price_feed_dto_1.PriceFeedDto(dtoRaw);
             yield this.priceFeedService.create(dto);
             if (requestedCurrencies[0] === 'ALL') {

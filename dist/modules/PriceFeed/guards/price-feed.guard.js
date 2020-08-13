@@ -18,11 +18,11 @@ let PriceFeedGuard = class PriceFeedGuard {
     validateParams(params) {
         const { coin, currency, } = params;
         const validCoins = coin.split(',').every((code) => {
-            return new RegExp('^[A-Z]{0,10}$').test(code);
+            return new RegExp('^[a-zA-Z0-9-+]{0,42}$').test(code);
         });
         const requestedCurrencies = currency.split(',');
         const validCurrencies = requestedCurrencies.every((currencyCode) => {
-            return new RegExp('^[A-Z]{0,3}$').test(currencyCode);
+            return new RegExp('^[a-zA-Z]{0,3}$').test(currencyCode);
         });
         const supportedCurrencies = this.configService.get('CURRENCIES').split(',');
         let supportsCurrencies = requestedCurrencies.every((currencyCode) => {

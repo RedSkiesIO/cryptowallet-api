@@ -17,7 +17,7 @@ let PriceHistoryGuard = class PriceHistoryGuard {
     }
     validateParams(params) {
         const { coin, currency, period, } = params;
-        const validCoin = new RegExp('^[A-Z]{0,10}$').test(coin);
+        const validCoin = new RegExp('^[a-zA-Z0-9-+]{0,42}$').test(coin);
         const requestedCurrencies = params.currency.split(',');
         const validCurrency = new RegExp('^[A-Z]{0,3}$').test(currency);
         const supportedCurrencies = this.configService.get('CURRENCIES').split(',');

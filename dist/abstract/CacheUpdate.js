@@ -9,7 +9,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const schedule = require("node-schedule");
-const async_1 = require("async");
 class CacheUpdate {
     scheduleInit(cronPattern) {
         schedule.scheduleJob(cronPattern, () => {
@@ -23,13 +22,12 @@ class CacheUpdate {
             documents.forEach((document) => {
                 operations.push((callback) => this.updateDocument(document, callback));
             });
-            return new Promise((resolve) => {
-                async_1.series(operations, (err) => {
-                    if (err) {
-                    }
-                    resolve();
-                });
-            });
+            return new Promise((resolve) => __awaiter(this, void 0, void 0, function* () {
+                for (const fn of operations) {
+                    yield fn();
+                }
+                resolve();
+            }));
         });
     }
 }

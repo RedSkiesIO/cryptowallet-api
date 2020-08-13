@@ -44,12 +44,13 @@ let PriceHistoryController = class PriceHistoryController {
             if (result) {
                 return result;
             }
-            const response = yield this.priceHistoryService.fetchExternalApi(code, currency, period);
+            const oldApi = new RegExp('^[A-Z]{0,10}$').test(code);
+            const response = yield this.priceHistoryService.fetchExternalApi(code, currency, period, oldApi);
             const dto = new price_history_dto_1.PriceHistoryDto({
                 code,
                 currency,
                 period,
-                data: response.data.Data,
+                data: oldApi ? response.data.Data : response,
                 timestamp: Math.round(+new Date() / 1000),
             });
             yield this.priceHistoryService.create(dto);
