@@ -21,6 +21,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var _a;
+const axios_1 = require("axios");
 const AbstractService_1 = require("../../abstract/AbstractService");
 const mongoose_1 = require("mongoose");
 const common_1 = require("@nestjs/common");
@@ -56,16 +57,20 @@ let PriceHistoryService = class PriceHistoryService extends AbstractService_1.Ab
     }
     fetchCryptoCompareApi(code, currency, period) {
         return __awaiter(this, void 0, void 0, function* () {
-            let days;
+            let histoType;
+            let limit;
             switch (period) {
                 case 'day':
-                    days = 1;
+                    histoType = 'hour';
+                    limit = 24;
                     break;
                 case 'week':
-                    days = 7;
+                    histoType = 'hour';
+                    limit = 168;
                     break;
                 case 'month':
-                    days = 30;
+                    histoType = 'day';
+                    limit = 31;
                     break;
                 default:
                     throw new common_1.HttpException('Internal Server Error', common_1.HttpStatus.INTERNAL_SERVER_ERROR);

@@ -38,11 +38,19 @@ export class FeeEstimateService extends AbstractService<FeeEstimate, FeeEstimate
       const gweiToWei = (val: any) => {
         return val * (10 ** 9);
       };
-      
+
+      if (response.status !== 200) {
+        let error = response.error;
+        if (!error) {
+          error = response.body;
+        }
+        throw new HttpException(`Internal Server Error. ${error}`, HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+
       return {
-        high: gweiToWei((response.fastest / 10)),
-        medium: gweiToWei((response.fast / 10)),
-        low: gweiToWei((response.average / 10))
+        high: gweiToWei((response.data.fast / 10) * 1.1),
+        medium: gweiToWei((response.data.average / 10)  * 1.1),
+        low: gweiToWei((response.data.safeLow / 10)  * 1.1)
       }
     }
     else if (supportedCodes.includes(code.toLowerCase())) {
