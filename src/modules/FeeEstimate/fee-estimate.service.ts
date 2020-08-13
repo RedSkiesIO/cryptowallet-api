@@ -30,13 +30,27 @@ export class FeeEstimateService extends AbstractService<FeeEstimate, FeeEstimate
   }
 
   async fetchExternalApi(code: string): Promise<any> {
-    const supportedCodes = ['btc', 'eth', 'ltc', 'dash'];
-    if (supportedCodes.includes(code.toLowerCase())) {
+    const supportedCodes = ['btc', 'ltc', 'dash'];
+    
+    try {
+    if(code.toLowerCase() === 'eth') {
+      const response: any = await axios.get(this.configService.get('ETHGASSTATION_URL'));
+      const gweiToWei = (val: any) => {
+        return val * (10 ** 9);
+      };
+      
+      return {
+        high: gweiToWei((response.fastest / 10)),
+        medium: gweiToWei((response.fast / 10)),
+        low: gweiToWei((response.average / 10))
+      }
+    }
+    else if (supportedCodes.includes(code.toLowerCase())) {
     const blockcypherToken = this.configService.get('BLOCKCYPHER_TOKEN');
     const blockcypherURL = this.configService.get('BLOCKCYPHER_URL');
     const URL = `${blockcypherURL}/v1/${code.toLowerCase()}/main?token=${blockcypherToken}`;
 
-    try {
+    
       const response: any = await axios.get(URL);
 
       if (response.status !== 200) {
@@ -60,21 +74,21 @@ export class FeeEstimateService extends AbstractService<FeeEstimate, FeeEstimate
       }
 
       return data;
-    } catch (err) {
-      if (err.response) {
-        throw new Error(`External API: ${err.response.status}`);
-      } else if (err.request) {
-        throw new Error(`External API: no response received`);
-      } else {
-        throw new Error(err.message);
-      }
-    }
     }
 
-    return {
-      high: 10000000000,
-      medium: 5000000000,
-      low: 1000000000,
-    };
+      return {
+        high: 10000000000,
+        medium: 5000000000,
+        low: 1000000000,
+      };
+    } catch (err) {
+    if (err.response) {
+      throw new Error(`External API: ${err.response.status}`);
+    } else if (err.request) {
+      throw new Error(`External API: no response received`);
+    } else {
+      throw new Error(err.message);
+    }
+   }
   }
 }
