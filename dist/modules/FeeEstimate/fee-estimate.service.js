@@ -35,12 +35,30 @@ let FeeEstimateService = class FeeEstimateService extends AbstractService_1.Abst
     }
     fetchExternalApi(code) {
         return __awaiter(this, void 0, void 0, function* () {
-            const supportedCodes = ['btc', 'eth', 'ltc', 'dash'];
-            if (supportedCodes.includes(code.toLowerCase())) {
-                const blockcypherToken = this.configService.get('BLOCKCYPHER_TOKEN');
-                const blockcypherURL = this.configService.get('BLOCKCYPHER_URL');
-                const URL = `${blockcypherURL}/v1/${code.toLowerCase()}/main?token=${blockcypherToken}`;
-                try {
+            const supportedCodes = ['btc', 'ltc', 'dash'];
+            try {
+                if (code.toLowerCase() === 'eth') {
+                    const response = yield axios_1.default.get(this.configService.get('ETHGASSTATION_URL'));
+                    const gweiToWei = (val) => {
+                        return val * (Math.pow(10, 9));
+                    };
+                    if (response.status !== 200) {
+                        let error = response.error;
+                        if (!error) {
+                            error = response.body;
+                        }
+                        throw new common_1.HttpException(`Internal Server Error. ${error}`, common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+                    }
+                    return {
+                        high: gweiToWei((response.data.fast / 10) * 1.1),
+                        medium: gweiToWei((response.data.average / 10) * 1.1),
+                        low: gweiToWei((response.data.safeLow / 10) * 1.1)
+                    };
+                }
+                else if (supportedCodes.includes(code.toLowerCase())) {
+                    const blockcypherToken = this.configService.get('BLOCKCYPHER_TOKEN');
+                    const blockcypherURL = this.configService.get('BLOCKCYPHER_URL');
+                    const URL = `${blockcypherURL}/v1/${code.toLowerCase()}/main?token=${blockcypherToken}`;
                     const response = yield axios_1.default.get(URL);
                     if (response.status !== 200) {
                         let error = response.error;
@@ -61,23 +79,23 @@ let FeeEstimateService = class FeeEstimateService extends AbstractService_1.Abst
                     }
                     return data;
                 }
-                catch (err) {
-                    if (err.response) {
-                        throw new Error(`External API: ${err.response.status}`);
-                    }
-                    else if (err.request) {
-                        throw new Error(`External API: no response received`);
-                    }
-                    else {
-                        throw new Error(err.message);
-                    }
+                return {
+                    high: 10000000000,
+                    medium: 5000000000,
+                    low: 1000000000,
+                };
+            }
+            catch (err) {
+                if (err.response) {
+                    throw new Error(`External API: ${err.response.status}`);
+                }
+                else if (err.request) {
+                    throw new Error(`External API: no response received`);
+                }
+                else {
+                    throw new Error(err.message);
                 }
             }
-            return {
-                high: 10000000000,
-                medium: 5000000000,
-                low: 1000000000,
-            };
         });
     }
 };
